@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -60,6 +61,31 @@ public:
       for (size_t j = 0; j < mat.col_; ++j) {
         this->data_[i][j] = mat.data_[i][j];
       }
+    }
+  }
+  matrixbase(std::initializer_list<std::initializer_list<T>> list) {
+
+    auto diamension_valid = [&list]() {
+      if (list.size() == 0)
+        return false;
+      for (auto itr = list.begin(); itr != list.end(); ++itr) {
+        if (list.begin()->size() != itr->size())
+          return false;
+      }
+      return true;
+    };
+
+    if (!diamension_valid())
+      throw std::runtime_error("diamension mismactch!");
+    this->row_ = list.size();
+    this->col_ = list.begin()->size();
+    this->data_ = new T *[this->row_];
+    this->data_[0] = new T[this->row_ * this->col_];
+    std::copy(list.begin()->begin(), list.begin()->end(), this->data_[0]);
+    for (size_t i = 1; i < this->row_; ++i) {
+      data_[i] = data_[i - 1] + this->col_;
+      std::copy((list.begin() + i)->begin(), (list.begin() + i)->end(),
+                this->data_[i]);
     }
   }
   ~matrixbase() {
@@ -168,7 +194,7 @@ public:
     }
     return *this;
   }
-  static matrixbase<T> Indetity(std::size_t size) {
+  static matrixbase<T> Identity(std::size_t size) {
     matrixbase<T> idet(size, size);
     for (std::size_t i = 0; i < size; ++i) {
       idet.data_[i][i] = T(1);
@@ -178,33 +204,36 @@ public:
   matrixbase<T> inverse() {
     if (this->row_ != this->col_)
       throw std::runtime_error("not square matrix!");
-    matrixbase<T> matI = Indetity(this->row_);
+    const auto &size = this->row_;
+    matrixbase<T> matI = Identity(this->row_);
     matrixbase<T> oriI(*this);
     auto vectorScale = [this](T *p, std::size_t len, T &scalar) {
       for (std::size_t idx = 0; idx < len; ++idx) {
         p[idx] *= scalar;
       }
     };
-    auto vectorSwap = [this](T *p, T *l) {
+    auto vectorSwap = [this](T *p, T *l, std::size_t len) {
       for (std::size_t idx = 0; idx < len; ++idx) {
         T temp = p[idx], p[idx] = l[idx], l[idx] = temp;
       }
     };
-    auto vectoradd = [this](T *p, T *l) {
+    auto vectoradd = [this](T *p, T *l, std::size_t len) {
       for (std::size_t idx = 0; idx < len; ++idx) {
         p[idx] += l[idx];
       }
     };
-
+    //
     for (std::size_t i = 0; i < this->col_; ++i) {
-      std::size_t loc = 0;
-      for (std::size_t j = 1; j < this->row_; ++j) {
-        if (data_[j][i] > data_[loc][i]) {
-          loc = j;
+      std::size_t max_ele_loc = 0; T max_ele = std::numeric_limits<T>::infinity;
+      for (std::size_t j = i; j < this->row_; ++j) {
+        if (data_[j][i] > data_[max_ele_loc][i]) {
+          max_ele_loc = j;
         }
       }
-      vectorSwap(data_[0], data_[loc]);
-      vectorSwap(matI.data_[0], matI.data_[loc]);
+      vectorSwap(data_[0], data_[max_ele_loc], size);
+      vectorSwap(matI.data_[0], matI.data_[max_ele_loc], size);
+      for (std::size_t j = i + 1; j < this->row_; ++j) {
+      }
     }
 
     return oriI;
