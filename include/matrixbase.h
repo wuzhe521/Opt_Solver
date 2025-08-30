@@ -6,20 +6,24 @@
 #define GONS_MATRIXBASE_H
 
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <numeric>
-#include <limits>
 #include <string>
 #include <vector>
 
 #include <exception>
+
+// 1: ON 0: OFF
+#define MATRIX_INV_MAJOR_ELE_SWT 1
 
 namespace gons {
 
 template <typename T> class matrixbase {
 private:
   T **data_;
-  size_t row_, col_;
+  std::size_t row_;
+  std::size_t col_;
 
 private:
   void initialize(const T &num) {
@@ -89,8 +93,10 @@ public:
     }
   }
   ~matrixbase() {
-    delete[] data_[0];
-    delete[] data_;
+    if (data_ != nullptr) {
+      delete[] data_[0];
+      delete[] data_;
+    }
   }
 
   std::size_t rows() const { return row_; }
@@ -162,7 +168,7 @@ public:
   matrixbase<T> &operator*=(const matrixbase<T> &mat) {
     if (this->col_ != mat.row_)
       throw std::runtime_error("dimension mismatch!");
-    matrixbase<T> temp(row_, mat.cols_);
+    matrixbase<T> temp(row_, mat.col_);
     for (int i = 0; i < temp.row_; ++i) {
       for (int j = 0; j < temp.col_; ++j) {
         for (int k = 0; k < col_; ++k) {
@@ -194,52 +200,134 @@ public:
     }
     return *this;
   }
-  static matrixbase<T> Identity(std::size_t size) {
+
+  matrixbase<T> Identity() {
+    if (this->col_ != this->row_ || this->col_ == 0)
+      throw std::runtime_error("not valid square matrix");
+    const auto &size = this->col_;
     matrixbase<T> idet(size, size);
     for (std::size_t i = 0; i < size; ++i) {
       idet.data_[i][i] = T(1);
     }
     return idet;
   }
+
+  static matrixbase<T> Augment(const matrixbase<T> &orig) {
+    if (orig.row_ != orig.col_ || orig.row_ == 0 || orig.col_ == 0) {
+      throw std::runtime_error("not valid square matrix");
+    }
+    matrixbase<T> aug(orig.row_, orig.col_ * 2);
+    for (std::size_t i = 0; i < orig.row_; ++i) {
+      for (std::size_t j = 0; j < orig.col_; ++j) {
+        aug.data_[i][j] = orig.data_[i][j];
+      }
+    }
+    for (std::size_t i = 0; i < orig.row_; ++i) {
+      aug.data_[i][i + orig.col_] = T(1);
+    }
+    return aug;
+  }
+  matrixbase<T> Augment() {
+    if (row_ != col_ || row_ == 0 || col_ == 0) {
+      throw std::runtime_error("not valid square matrix");
+    }
+    matrixbase<T> aug(row_, col_ * 2);
+    for (std::size_t i = 0; i < row_; ++i) {
+      for (std::size_t j = 0; j < col_; ++j) {
+        aug.data_[i][j] = data_[i][j];
+      }
+    }
+    for (std::size_t i = 0; i < row_; ++i) {
+      aug.data_[i][i + col_] = T(1);
+    }
+    return aug;
+  }
+  matrixbase<T> transpose() {
+    if (this->row_ == 0 || this->col_ == 0)
+      throw std::runtime_error("empty matrix!");
+    matrixbase<T> trans(this->col_, this->row_);
+    for (std::size_t i = 0; i < this->row_; ++i) {
+      for (std::size_t j = 0; j < this->col_; ++j) {
+        trans.data_[j][i] = this->data_[i][j];
+      }
+    }
+    return trans;
+  }
   matrixbase<T> inverse() {
-    if (this->row_ != this->col_)
+    if (this->row_ != this->col_ || this->row_ < 1)
       throw std::runtime_error("not square matrix!");
+    if (this->row_ == 1) {
+      if (this->data_[0][0] == 0)
+        throw std::runtime_error(" matrix uninvertible");
+      matrixbase<T> inv(1, 1);
+      inv.data_[0][0] = 1 / this->data_[0][0];
+      return inv;
+    }
+    if (this->row_ == 2) {
+      matrixbase<T> inv(2, 2);
+      T det = this->data_[0][0] * this->data_[1][1] -
+              this->data_[0][1] * this->data_[1][0];
+      if (det == 0)
+        throw std::runtime_error(" matrix uninvertible");
+      inv.data_[0][0] = this->data_[1][1] / det;
+      inv.data_[0][1] = -this->data_[0][1] / det;
+      inv.data_[1][0] = -this->data_[1][0] / det;
+      inv.data_[1][1] = this->data_[0][0] / det;
+      return inv;
+    }
+    matrixbase<T> augMat(this->Augment());
+    const auto &row_cnt = this->row_;
+    const auto &col_cnt = this->col_;
     const auto &size = this->row_;
-    matrixbase<T> matI = Identity(this->row_);
-    matrixbase<T> oriI(*this);
-    auto vectorScale = [this](T *p, std::size_t len, T &scalar) {
+    const auto &aug_col = augMat.col_;
+    auto vector_scal = [](T *p, const double &scale, const std::size_t &len) {
       for (std::size_t idx = 0; idx < len; ++idx) {
-        p[idx] *= scalar;
+        p[idx] *= scale;
       }
     };
-    auto vectorSwap = [this](T *p, T *l, std::size_t len) {
+    auto vector_scal_sub = [this](T *p, T *l, const T &scale,
+                                  const std::size_t &len) {
       for (std::size_t idx = 0; idx < len; ++idx) {
-        T temp = p[idx], p[idx] = l[idx], l[idx] = temp;
+        auto temp = l[idx] * scale;
+        p[idx] = p[idx] - temp;
       }
     };
-    auto vectoradd = [this](T *p, T *l, std::size_t len) {
-      for (std::size_t idx = 0; idx < len; ++idx) {
-        p[idx] += l[idx];
+    auto vector_switch = [this](T *p, T *l, const std::size_t &len) {
+      T temp;
+      for (std::size_t i = 0; i < len; ++i) {
+        temp = p[i], p[i] = l[i], l[i] = temp;
       }
     };
-    //
-    for (std::size_t i = 0; i < this->col_; ++i) {
-      std::size_t max_ele_loc = 0; T max_ele = std::numeric_limits<T>::infinity;
-      for (std::size_t j = i; j < this->row_; ++j) {
-        if (data_[j][i] > data_[max_ele_loc][i]) {
+    for (std::size_t i = 0; i < col_cnt; ++i) {
+
+      std::size_t max_ele_loc = 0;
+      T max_ele = T(0);
+      for (std::size_t j = i; j < row_cnt; ++j) {
+        if (std::abs(augMat.data_[j][i]) > max_ele) {
+          max_ele = std::abs(augMat.data_[j][i]);
           max_ele_loc = j;
         }
       }
-      vectorSwap(data_[0], data_[max_ele_loc], size);
-      vectorSwap(matI.data_[0], matI.data_[max_ele_loc], size);
-      for (std::size_t j = i + 1; j < this->row_; ++j) {
+      vector_switch(augMat.data_[i], augMat.data_[max_ele_loc], aug_col);
+      if (std::abs(augMat.data_[i][i]) < 1E-10)
+        throw std::runtime_error(" matrix uninvertible");
+      const double &para = 1 / augMat.data_[i][i];
+      vector_scal(augMat.data_[i], para, aug_col);
+      for (std::size_t j = 0; j < row_cnt; ++j) {
+        if (i == j)
+          continue;
+        const double para = augMat.data_[j][i];
+        vector_scal_sub(augMat.data_[j], augMat.data_[i], para, aug_col);
       }
     }
-
-    return oriI;
+    matrixbase<T> inv(this->Identity());
+    for (std::size_t i = 0; i < row_cnt; ++i) {
+      for (std::size_t j = 0; j < col_cnt; ++j) {
+        inv.data_[i][j] = augMat.data_[i][j + col_cnt];
+      }
+    }
+    return inv;
   }
-
-  matrixbase &operator^=(const T &scalar);
 
 public:
   friend std::ostream &operator<<(std::ostream &os, const matrixbase<T> &mat) {
@@ -290,7 +378,5 @@ public:
     return result;
   }
 };
-
 } // namespace gons
-
 #endif
