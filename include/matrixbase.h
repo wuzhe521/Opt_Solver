@@ -67,6 +67,12 @@ public:
       }
     }
   }
+  matrixbase(matrixbase<T> &&mat) noexcept
+      : data_(mat.data_), row_(mat.row_), col_(mat.col_) {
+    mat.data_ = nullptr;
+    mat.row_ = 0;
+    mat.col_ = 0;
+  }
   matrixbase(std::initializer_list<std::initializer_list<T>> list) {
 
     auto diamension_valid = [&list]() {
@@ -189,7 +195,6 @@ public:
     return *this;
   }
 
-  // matrixbase &operator/=(const matrixbase &mat) {}
   matrixbase<T> &operator/=(const T &scalar) {
     if (this->col_ == 0 || this->row_ == 0 || this->data_ == nullptr)
       throw std::runtime_error("empty matrix!");
@@ -278,7 +283,6 @@ public:
     matrixbase<T> augMat(this->Augment());
     const auto &row_cnt = this->row_;
     const auto &col_cnt = this->col_;
-    const auto &size = this->row_;
     const auto &aug_col = augMat.col_;
     auto vector_scal = [](T *p, const double &scale, const std::size_t &len) {
       for (std::size_t idx = 0; idx < len; ++idx) {
@@ -300,8 +304,8 @@ public:
     };
     for (std::size_t i = 0; i < col_cnt; ++i) {
 
-      std::size_t max_ele_loc = 0;
-      T max_ele = T(0);
+      std::size_t max_ele_loc = i;
+      T max_ele = augMat.data_[i][i];
       for (std::size_t j = i; j < row_cnt; ++j) {
         if (std::abs(augMat.data_[j][i]) > max_ele) {
           max_ele = std::abs(augMat.data_[j][i]);
@@ -309,7 +313,7 @@ public:
         }
       }
       vector_switch(augMat.data_[i], augMat.data_[max_ele_loc], aug_col);
-      if (std::abs(augMat.data_[i][i]) < 1E-10)
+      if (std::abs(augMat.data_[i][i]) < 1E-8)
         throw std::runtime_error(" matrix uninvertible");
       const double &para = 1 / augMat.data_[i][i];
       vector_scal(augMat.data_[i], para, aug_col);
