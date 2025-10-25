@@ -1,0 +1,12 @@
+#ifndef GeneralOpenSourceNumericalSolver
+#define GeneralOpenSourceNumericalSolver
+
+#include "core/vector.h"
+#include "core/matrix.h"
+#include "core/config.h"
+#include "core/utilites.h"
+
+#include  "core/linearsearch.h"
+
+
+#endif
