@@ -1,0 +1,8 @@
+#ifndef GONS_GERNERAL_MATRIX_H_
+#define GONS_GERNERAL_MATRIX_H_
+
+#include "core/config.h"
+#include "core/utilites.h"
+#include "core/matrix.h"
+
+#endif // GONS_GERNERAL_MATRIX_H_
