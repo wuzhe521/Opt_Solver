@@ -8,12 +8,7 @@ Matrix 类以头文件的方式实现，无需额外为Matrix类处理编译问�
 [[Basic Matrix Operation refered from MATLAB](https://ww2.mathworks.cn/help/matlab/math/matrices-in-the-matlab-environment.html)]  
 
 
-![Linux build status](https://github.com/autodiff/autodiff/workflows/linux/badge.svg?branch=master)
-![Windows build status](https://github.com/autodiff/autodiff/workflows/windows/badge.svg?branch=master)
-![Coverage](https://codecov.io/gh/autodiff/autodiff/branch/master/graph/badge.svg)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![GitHub release](https://img.shields.io/github/release/autodiff/autodiff.svg)](https://github.com/autodiff/autodiff/releases)
-[![GitHub issues](https://img.shields.io/github/issues/autodiff/autodiff.svg)](https://github.com/autodiff/autodiff/issues)
+
 
 
 #矩阵类
