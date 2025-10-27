@@ -305,3 +305,8 @@ GoldsteinStatus Optimize() {
  > Wolfe search converged to a local minimum  
  > Final x: 0.00060936 0.00060936   
  > Final f(x): 7.42639e-07  
+
+
+ ## 收敛性分析
+ ### Zoutendijk 条件
+Zoutendijk 条件是关于函数的 Lipschitz  Lipschitz 条件的扩展，即对于任意 $x, y \in \mathbb{R}^n$ ，有 $f(x) - f(y) \leq L(x - y)^T (x - y)$ ，其中 $L$ 是一个正数。
