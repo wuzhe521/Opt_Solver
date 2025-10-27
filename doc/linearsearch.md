@@ -135,3 +135,97 @@ int main()
 > Armijo search converged to a local minimum  
 > Final x: 0.00064, 0.00064  
 > Final f(x): 8.192e-07  
+
+## Goldstein 搜索条件
+线搜索类算法中，Goldstein 搜索条件是常用的搜索条件．即步长满足如下条件：
+$f(x^k + α^k d^k) < f(x^k) + c_1 α^k \bigtriangledown f(x^k)^T d^k$
+$f(x^k + α^k d^k) > f(x^k) + c_2 α^k \bigtriangledown f(x^k)^T d^k$
+其中 $c_1$ 和 $c_2$ 都是正数，常取 $c_1 = 10^{-4}$ ， $c_2 = 0.9$ 。
+在gons中，Goldstein 搜索条件类定义如下, 其中选取下降方向 $d^k$ 为 $d^k = -\bigtriangledown f(x^k)$ ．：
+```cpp
+X Search() {
+    // Implementation of Goldstein search
+    const double min_beta =
+        1e-10; // Minimum beta to avoid numerical instability
+    GONS_UINT iteration = 0;
+    double beta = params_.beta;
+    while (true) {
+      ++iteration;
+      if (iteration > params_.max_inner_iter) {
+        break;
+      }
+      if (beta < min_beta) { // Check if beta is too small and break if it is
+        break;
+      }
+      X gradient = f_.gradient(x_);
+      double f_x = f_(x_);
+      double f_x_new = f_(x_ - params_.beta * gradient);
+      if (f_x_new < f_x - params_.beta *  params_.alpha * gradient.Norm2() &&
+          f_x_new > f_x - (1 -  params_.alpha) * params_.beta * gradient.Norm2()) {
+        params_.beta = beta;
+        return x_ - params_.alpha * gradient;
+      }
+      if (f_x_new <=
+          f_x - (1 - params_.alpha) * params_.beta * gradient.Norm2()) {
+        //
+        beta *= params_.gamma * 1.5;
+        continue;
+      }
+      beta *= params_.gamma;
+    }
+    return x_ - params_.alpha * f_.gradient(x_);
+  }
+  ```
+  得到步长以后，我们就需要更新迭代点了，在gons中，更新迭代点方法如下：
+  ```cpp
+GoldsteinStatus Optimize() {
+    LOG(SOLVER_HEADER);
+    GONS_UINT i = 0;
+    while (true) {
+      ++i;
+      if (params_.enable_max_iter)
+        if (i >= params_.max_iter)
+          break;
+      X x_new = Search();
+      if (params_.print_info) {
+        LOG("Iteration: " << i);
+        LOG_WARNING("Function value last: " << f_(x_));
+        LOG_WARNING("Function value new: " << f_(x_new));
+        LOG_WARNING("Gradient Norm2: " << f_.gradient(x_).Norm2());
+        LOG_ERROR("x: " << x_);
+      }
+      if (std::abs(f_(x_new) - f_(x_)) < params_.epsilon) {
+        LOG_ERROR("After " << i << " iterations, ");
+        LOG_ERROR("Goldstein search converged to a local minimum");
+        return GoldsteinStatus::Success;
+      }
+      x_ = x_new;
+    }
+    return GoldsteinStatus::Failure;
+  }
+  ```
+  以函数 $f(x_1, x_2) = x^2_1 + x^2_2$ 为例, 我们可以使用Goldstein搜索算法来找到其最小值。
+  ```cpp
+  gons::GoldsteinSearch<TestFunction, X> goldstein_search(f, x);
+  gons::GoldsteinSearch<TestFunction, X>::GoldsteinParameters goldstein_params;
+  goldstein_search.Optimize();
+  LOG("Final x: " << goldstein_search.get_x());
+  LOG("Final f(x): " << goldstein_search.get_function_value());
+  ```
+  运行结果为：
+  > After 15 iterations,  
+  > Goldstein search converged to a local minimum  
+  > Final x: 0.00061, 0.000641 
+  > Final f(x): 7.45058e-07
+
+  ## wolfe 搜索条件
+  线搜索类算法中，wolfe 搜索条件是常用的搜索条件．即步长满足如下条件：
+  $f(x^k + α^k d^k) < f(x^k) + c_1 α^k \bigtriangledown f(x^k)^T d^k$
+  $\bigtriangledown f(x^k + α^k d^k)^T d^k > c_2 \bigtriangledown f(x^k)^T d^k$
+  其中 $c_1$ 和 $c_2$ 都是正数，常取 $c_1 = 10^{-4}$ ， $c_2 = 0.9$ 。
+  在gons中，wolfe 搜索条件类定义如下, 其中选取下降方向 $d^k$ 为 $d^k = -\bigtriangledown f(x^k)$ ．：
+  ```cpp
+  X Search() {
+    //
+    const double min_beta =
+  ```

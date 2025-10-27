@@ -91,11 +91,11 @@ public:
 private:
   Function f_;
   X x_;
-
   //  Paremeters
   ArmijoParameters params_;
 };
-/*
+
+// Goldstein search
 template <typename Function, typename X> class GoldsteinSearch {
 public:
   struct GoldsteinParameters {
@@ -111,41 +111,42 @@ public:
   enum class GoldsteinStatus { Success, Failure };
 
 public:
-  GoldsteinSearch(const Function &f, const X &x0,
-                  const GoldsteinParameters &params)
-      : f_(f), x_(x0), params_(params) {}
-
+  GoldsteinSearch(const Function &f, const X &x0) : f_(f), x_(x0) {}
+  void set_params(const GoldsteinParameters &params) { params_ = params; }
   X get_x() const { return x_; }
   double get_function_value() const { return f_(x_); }
 
   X Search() {
     // Implementation of Goldstein search
-    const double min_alpha =
-        1e-10; // Minimum alpha to avoid numerical instability]
+    const double min_beta =
+        1e-10; // Minimum beta to avoid numerical instability
     GONS_UINT iteration = 0;
-    double alpha = params_.alpha;
+    double beta = params_.beta;
     while (true) {
-      //
+      ++iteration;
+      if (iteration > params_.max_inner_iter) {
+        break;
+      }
+      if (beta < min_beta) { // Check if beta is too small and break if it is
+        break;
+      }
       X gradient = f_.gradient(x_);
       double f_x = f_(x_);
-      double f_x_new = f_(x_ - params_.alpha * gradient);
+      double f_x_new = f_(x_ - params_.beta * gradient);
+      if (f_x_new < f_x - params_.beta *  params_.alpha * gradient.Norm2() &&
+          f_x_new > f_x - (1 -  params_.alpha) * params_.beta * gradient.Norm2()) {
+        params_.beta = beta;
+        return x_ - params_.alpha * gradient;
+      }
       if (f_x_new <=
           f_x - (1 - params_.alpha) * params_.beta * gradient.Norm2()) {
         //
-        alpha *= (1 + params_.gamma);
+        beta *= params_.gamma * 1.5;
+        continue;
       }
-      if (f_x_new >= f_x - params_.alpha * params_.beta * gradient.Norm2()) {
-        alpha *= params_.gamma;
-      }
-      if (f_x_new < f_x - params_.beta * alpha * gradient.Norm2() &&
-          f_x_new > f_x - (1 - alpha) * params_.beta * gradient.Norm2()) {
-        break;
-      }
-      if (alpha < min_alpha) {
-        break;
-      }
-      x_ -= params_.alpha * gradient;
+      beta *= params_.gamma;
     }
+    return x_ - params_.alpha * f_.gradient(x_);
   }
   GoldsteinStatus Optimize() {
     LOG(SOLVER_HEADER);
@@ -176,10 +177,42 @@ public:
 private:
   Function f_;
   X x_;
-
   // Parameters
   GoldsteinParameters params_;
-};*/
+};
 
+
+// wolfe search
+/*
+template <typename Function, typename X> class WolfeSearch {
+  public:
+  struct WolfeParameters {
+    double alpha = 0.25;
+    double beta = 0.5;
+    double gamma = 0.333;
+    double epsilon = GONS_FLT_EPSILON;
+    GONS_UINT max_inner_iter = 1000u;
+    bool enable_max_iter = true;
+    GONS_UINT max_iter = 1000u;
+    bool print_info = false;
+  };
+  enum class WolfeStatus { Success, Failure };
+  public:
+
+  WolfeSearch(Function f, X x) : f_(f), x_(x) {}
+  void set_params(const WolfeParameters &params) { params_ = params; }
+  X get_x() const { return x_; }
+  double get_function_value() const { return f_(x_); }
+  X Search() {
+    const double min_beta =
+        1e-10; //
+  }
+  private:
+  Function f_;
+  X x_;
+  //
+  WolfeParameters params_;
+
+};*/
 } //   namespace gons
 #endif
