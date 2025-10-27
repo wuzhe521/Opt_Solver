@@ -32,11 +32,10 @@ public:
   X ArmijoRule() {
     const double min_alpha =
         1e-10; // Minimum alpha to avoid numerical instability
-    const int max_iterations =
-        1000; // Maximum iterations to prevent infinite loop
+
     int iteration = 0;
 
-    while (iteration < max_iterations) {
+    while (iteration < params_.max_inner_iter) {
       // Check if alpha is too small
       if (params_.alpha < min_alpha) {
         break;
@@ -52,13 +51,18 @@ public:
       }
       // Update alpha for next iteration
       params_.alpha *= params_.gamma;
-      iteration++;
+      if (params_.enable_max_iter)
+        iteration++;
     }
     return x_ - params_.alpha * f_.gradient(x_);
   }
   ArmijoStatus Optimize() {
     LOG(SOLVER_HEADER);
-    for (GONS_UINT i = 0; i < params_.max_iter && !params_.enable_max_iter; ++i) {
+    GONS_UINT i = 0;
+    while(true) {
+      ++i;
+      if (params_.enable_max_iter)
+          if (i >= params_.max_iter) break;
       X x_new = ArmijoRule();
       if (params_.print_info) {
         LOG("Iteration: " << i);
@@ -68,6 +72,7 @@ public:
         LOG_ERROR("x: " << x_);
       }
       if (std::abs(f_(x_new) - f_(x_)) < params_.epsilon) {
+        LOG_ERROR("After " << i << " iterations, ");
         LOG_ERROR("Armijo search converged to a local minimum");
         return ArmijoStatus::Success;
       }
@@ -79,7 +84,7 @@ public:
 private:
   Function f_;
   X x_;
-  
+
   //  Paremeters
   ArmijoParameters params_;
 };
