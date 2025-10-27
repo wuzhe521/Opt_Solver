@@ -21,16 +21,6 @@ int main() {
   X x = {10, 10};
   // 使用Armijo搜索优化器
   gons::ArmijoSearch<TestFunction, X> armijo_search(f, x);
-
-  gons::ArmijoSearch<TestFunction, X>::ArmijoParameters params;
-
-  params.alpha = 0.0001;
-  params.beta = 0.2;
-  params.gamma = 0.333;
-  params.enable_max_iter = true;
-  params.epsilon = 1e-6;
-  params.print_info = true;
-  armijo_search.set_params(params);
   armijo_search.Optimize();
   LOG("Final x: " << armijo_search.get_x());
   LOG("Final f(x): " << armijo_search.get_function_value());
@@ -40,5 +30,12 @@ int main() {
   goldstein_search.Optimize();
   LOG("Final x: " << goldstein_search.get_x());
   LOG("Final f(x): " << goldstein_search.get_function_value());
+
+  // 使用Wolfe搜索优化器
+  gons::WolfeSearch<TestFunction, X> wolfe_search(f, x);
+  gons::WolfeSearch<TestFunction, X>::WolfeParameters wolfe_params;
+  wolfe_search.Optimize();
+  LOG("Final x: " << wolfe_search.get_x());
+  LOG("Final f(x): " << wolfe_search.get_function_value());
   return 0;
 }

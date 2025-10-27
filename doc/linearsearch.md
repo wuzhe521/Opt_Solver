@@ -214,18 +214,94 @@ GoldsteinStatus Optimize() {
   ```
   运行结果为：
   > After 15 iterations,  
-  > Goldstein search converged to a local minimum  
-  > Final x: 0.00061, 0.000641 
+  > Goldstein search converged to a local minimum   
+  > Final x: 0.00061, 0.000641   
   > Final f(x): 7.45058e-07
 
   ## wolfe 搜索条件
-  线搜索类算法中，wolfe 搜索条件是常用的搜索条件．即步长满足如下条件：
-  $f(x^k + α^k d^k) < f(x^k) + c_1 α^k \bigtriangledown f(x^k)^T d^k$
-  $\bigtriangledown f(x^k + α^k d^k)^T d^k > c_2 \bigtriangledown f(x^k)^T d^k$
-  其中 $c_1$ 和 $c_2$ 都是正数，常取 $c_1 = 10^{-4}$ ， $c_2 = 0.9$ 。
+  线搜索类算法中，wolfe 搜索条件是常用的搜索条件．即步长满足如下条件：  
+  1. $f(x^k + α^k d^k) < f(x^k) + c_1 α^k \bigtriangledown f(x^k)^T d^k$  
+  2. $\bigtriangledown f(x^k + α^k d^k)^T d^k > c_2 \bigtriangledown f(x^k)^T d^k$   
+  
+  其中 $c_1$ 和 $c_2$ 都是正数，常取 $c_1 = 10^{-4}$ ， $c_2 = 0.9$ 。可以看出，wolfe 搜索条件是Armijo 搜索条件 的一个扩展,
+  wolfe 条件的第一条就是 Armijo 条件，第二条是 curvature 条件, 要求在新的点 $x^k + α^k d^k$ 处，切线的斜率大于 $c_2 \bigtriangledown f(x^k)^T d^k$ 。
   在gons中，wolfe 搜索条件类定义如下, 其中选取下降方向 $d^k$ 为 $d^k = -\bigtriangledown f(x^k)$ ．：
   ```cpp
   X Search() {
-    //
-    const double min_beta =
+    const double min_beta = 1e-10;
+    GONS_UINT iteration = 0;
+    double beta = params_.beta;
+    while (true) {
+      ++iteration;
+      if (iteration > params_.max_inner_iter) {
+        break;
+      }
+      if (beta < min_beta) { // Check if beta is too small and break if it is
+        break;
+      }
+      X gradient = f_.gradient(x_);
+      double f_x = f_(x_);
+      // Wolfe conditions
+      double f_x_new = f_(x_ - beta * gradient);
+      if (f_x_new <= f_x - params_.alpha_1 * beta * gradient.Norm2()) {
+        // Armijo condition satisfied
+        X gradient_new = f_.gradient(x_ - beta * gradient);
+        if (-gradient_new.Norm2() > - params_.alpha_2 * gradient.Norm2()) {
+          // Wolfe condition satisfied
+          params_.beta = beta;
+          return x_ - beta * gradient;
+        } else {
+          // Only Armijo condition satisfied, decrease beta
+          beta *= params_.gamma;
+        }
+      } else {
+        // Neither condition satisfied, increase beta
+        beta *= params_.beta;
+      }
+    }
+    params_.beta = beta;
+    return x_ - beta * f_.gradient(x_);
+  }
   ```
+  得步长以后，我们就需要更新迭代点了，在gons中，更新迭代点方法如下：
+  ```cpp
+  WolfeStatus Optimize() {
+    LOG(SOLVER_HEADER);
+    GONS_UINT i = 0;
+    while (true) {
+      ++i;
+      if (params_.enable_max_iter)
+        if (i >= params_.max_iter)
+          break;
+      X x_new = Search();
+      if (params_.print_info) { 
+        LOG("Iteration: " << i);
+        LOG_WARNING("Function value last: " << f_(x_));
+        LOG_WARNING("Function value new: " << f_(x_new));
+        LOG_WARNING("Gradient Norm2: " << f_.gradient(x_).Norm2());
+        LOG_ERROR("x: " << x_);
+      }
+      if (std::abs(f_(x_new) - f_(x_)) < params_.epsilon) {
+        LOG_ERROR("After " << i << " iterations, ");
+        LOG_ERROR("Wolfe search converged to a local minimum");
+        return WolfeStatus::Success;
+      }
+      x_ = x_new;
+    }
+    return WolfeStatus::Failure;
+  }
+  ```
+  以函数 $f(x_1, x_2) = x^2_1 + x^2_2$ 为例, 我们可以使用wolfe搜索算法来找到其最小值。
+  ```cpp
+  gons::WolfeSearch<TestFunction, X> wolfe_search(f, x);
+  gons::WolfeSearch<TestFunction, X>::WolfeParameters wolfe_params;
+  wolfe_search.Optimize();
+  LOG("Final x: " << wolfe_search.get_x());
+  LOG("Final f(x): " << wolfe_search.get_function_value());
+  return 0;
+  ```
+  运行结果为：
+ > After 20 iterations,   
+ > Wolfe search converged to a local minimum  
+ > Final x: 0.00060936 0.00060936   
+ > Final f(x): 7.42639e-07  

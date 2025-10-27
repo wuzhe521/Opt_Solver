@@ -13,7 +13,7 @@ template <typename Function, typename X> class ArmijoSearch {
 public:
   struct ArmijoParameters {
     double alpha = 1e-4;
-    double beta = 0.5;
+    double beta = 0.2;
     double gamma = 0.333;
     double epsilon = GONS_FLT_EPSILON;
     GONS_UINT max_inner_iter = 1000u;
@@ -133,16 +133,11 @@ public:
       X gradient = f_.gradient(x_);
       double f_x = f_(x_);
       double f_x_new = f_(x_ - params_.beta * gradient);
-      if (f_x_new < f_x - params_.beta *  params_.alpha * gradient.Norm2() &&
-          f_x_new > f_x - (1 -  params_.alpha) * params_.beta * gradient.Norm2()) {
+      if (f_x_new < f_x - params_.beta * params_.alpha * gradient.Norm2() &&
+          f_x_new >
+              f_x - (1 - params_.alpha) * params_.beta * gradient.Norm2()) {
         params_.beta = beta;
         return x_ - params_.alpha * gradient;
-      }
-      if (f_x_new <=
-          f_x - (1 - params_.alpha) * params_.beta * gradient.Norm2()) {
-        //
-        beta *= params_.gamma * 1.5;
-        continue;
       }
       beta *= params_.gamma;
     }
@@ -181,14 +176,14 @@ private:
   GoldsteinParameters params_;
 };
 
-
 // wolfe search
-/*
+
 template <typename Function, typename X> class WolfeSearch {
-  public:
+public:
   struct WolfeParameters {
-    double alpha = 0.25;
-    double beta = 0.5;
+    double alpha_1 = 0.0001;
+    double alpha_2 = 0.9;
+    double beta = 0.2;
     double gamma = 0.333;
     double epsilon = GONS_FLT_EPSILON;
     GONS_UINT max_inner_iter = 1000u;
@@ -197,22 +192,77 @@ template <typename Function, typename X> class WolfeSearch {
     bool print_info = false;
   };
   enum class WolfeStatus { Success, Failure };
-  public:
 
+public:
   WolfeSearch(Function f, X x) : f_(f), x_(x) {}
-  void set_params(const WolfeParameters &params) { params_ = params; }
+  void set_parameters(const WolfeParameters &params) { params_ = params; }
   X get_x() const { return x_; }
   double get_function_value() const { return f_(x_); }
   X Search() {
-    const double min_beta =
-        1e-10; //
+    const double min_beta = 1e-10;
+    GONS_UINT iteration = 0;
+    double beta = params_.beta;
+    while (true) {
+      ++iteration;
+      if (iteration > params_.max_inner_iter) {
+        break;
+      }
+      if (beta < min_beta) { // Check if beta is too small and break if it is
+        break;
+      }
+      X gradient = f_.gradient(x_);
+      double f_x = f_(x_);
+      // Wolfe conditions
+      double f_x_new = f_(x_ - beta * gradient);
+      if (f_x_new <= f_x - params_.alpha_1 * beta * gradient.Norm2()) {
+        // Armijo condition satisfied
+        X gradient_new = f_.gradient(x_ - beta * gradient);
+        if (-gradient_new.Norm2() > - params_.alpha_2 * gradient.Norm2()) {
+          // Wolfe condition satisfied
+          params_.beta = beta;
+          return x_ - beta * gradient;
+        } else {
+          // Only Armijo condition satisfied, decrease beta
+          beta *= params_.gamma;
+        }
+      } else {
+        // Neither condition satisfied, increase beta
+        beta *= params_.beta;
+      }
+    }
+    params_.beta = beta;
+    return x_ - beta * f_.gradient(x_);
   }
-  private:
+  WolfeStatus Optimize() {
+    LOG(SOLVER_HEADER);
+    GONS_UINT i = 0;
+    while (true) {
+      ++i;
+      if (params_.enable_max_iter)
+        if (i >= params_.max_iter)
+          break;
+      X x_new = Search();
+      if (params_.print_info) { 
+        LOG("Iteration: " << i);
+        LOG_WARNING("Function value last: " << f_(x_));
+        LOG_WARNING("Function value new: " << f_(x_new));
+        LOG_WARNING("Gradient Norm2: " << f_.gradient(x_).Norm2());
+        LOG_ERROR("x: " << x_);
+      }
+      if (std::abs(f_(x_new) - f_(x_)) < params_.epsilon) {
+        LOG_ERROR("After " << i << " iterations, ");
+        LOG_ERROR("Wolfe search converged to a local minimum");
+        return WolfeStatus::Success;
+      }
+      x_ = x_new;
+    }
+    return WolfeStatus::Failure;
+  }
+private:
   Function f_;
   X x_;
   //
   WolfeParameters params_;
-
-};*/
+};
 } //   namespace gons
 #endif
