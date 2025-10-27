@@ -30,8 +30,8 @@ int main()
 
     gons::ArmijoSearch<TestFunction, X>::ArmijoParameters params;
 
-    params.alpha = 0.01;
-    params.beta = 0.2;
+    params.alpha = 0.0001;
+    params.beta = 0.4;
     params.gamma = 0.333;
     params.enable_max_iter = true;
     params.epsilon = 1e-6;
