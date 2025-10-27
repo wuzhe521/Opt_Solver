@@ -33,9 +33,10 @@ public:
     const double min_alpha =
         1e-10; // Minimum alpha to avoid numerical instability
 
-    int iteration = 0;
+    GONS_UINT iteration = 0;
 
     while (iteration < params_.max_inner_iter) {
+      double alpha = params_.alpha;
       // Check if alpha is too small
       if (params_.alpha < min_alpha) {
         break;
@@ -44,13 +45,13 @@ public:
       // Cache gradient to avoid repeated computation
       X gradient = f_.gradient(x_);
       double f_x = f_(x_);
-      double f_x_new = f_(x_ - params_.alpha * gradient);
-      if (f_x_new < f_x - params_.beta * params_.alpha * gradient.Norm2()) {
+      double f_x_new = f_(x_ - alpha * gradient);
+      if (f_x_new < f_x - params_.beta * alpha * gradient.Norm2()) {
         // Armijo condition is satisfied
-        return x_ - params_.alpha * gradient;
+        return x_ - alpha * gradient;
       }
       // Update alpha for next iteration
-      params_.alpha *= params_.gamma;
+      alpha *= params_.gamma;
       if (params_.enable_max_iter)
         iteration++;
     }
@@ -59,10 +60,11 @@ public:
   ArmijoStatus Optimize() {
     LOG(SOLVER_HEADER);
     GONS_UINT i = 0;
-    while(true) {
+    while (true) {
       ++i;
       if (params_.enable_max_iter)
-          if (i >= params_.max_iter) break;
+        if (i >= params_.max_iter)
+          break;
       X x_new = ArmijoRule();
       if (params_.print_info) {
         LOG("Iteration: " << i);
@@ -88,6 +90,82 @@ private:
   //  Paremeters
   ArmijoParameters params_;
 };
+/*
+template <typename Function, typename X> class GoldsteinSearch {
+public:
+  struct GoldsteinParameters {
+    double alpha = 0.25;
+    double beta = 0.5;
+    double gamma = 0.333;
+    double epsilon = GONS_FLT_EPSILON;
+    GONS_UINT max_inner_iter = 1000u;
+    bool enable_max_iter = true;
+    GONS_UINT max_iter = 1000u;
+    bool print_info = false;
+  };
+  enum class GoldsteinStatus { Success, Failure };
 
-} // namespace gons
-#endif //
+public:
+  GoldsteinSearch(const Function &f, const X &x0,
+                  const GoldsteinParameters &params)
+      : f_(f), x_(x0), params_(params) {}
+
+  X get_x() const { return x_; }
+  double get_function_value() const { return f_(x_); }
+
+  X Search() {
+    // Implementation of Goldstein search
+    const double min_alpha =
+        1e-10; // Minimum alpha to avoid numerical instability
+    while (true) {
+      //
+      X gradient = f_.gradient(x_);
+      double f_x = f_(x_);
+      double f_x_new = f_(x_ - params_.alpha * gradient);
+      if (f_x_new < f_x - params_.beta * params_.alpha * gradient.Norm2() &&
+          f_x_new >
+              f_x - (1 - params_.alpha) * params_.beta * gradient.Norm2()) {
+        //
+        return x_;
+      }
+      params_.alpha *= params_.gamma;
+
+    }
+  }
+  GoldsteinStatus Optimize() {
+    LOG(SOLVER_HEADER);
+    GONS_UINT i = 0;
+    while (true) {
+      ++i;
+      if (params_.enable_max_iter)
+        if (i >= params_.max_iter)
+          break;
+      X x_new = Search();
+      if (params_.print_info) {
+        LOG("Iteration: " << i);
+        LOG_WARNING("Function value last: " << f_(x_));
+        LOG_WARNING("Function value new: " << f_(x_new));
+        LOG_WARNING("Gradient Norm2: " << f_.gradient(x_).Norm2());
+        LOG_ERROR("x: " << x_);
+      }
+      if (std::abs(f_(x_new) - f_(x_)) < params_.epsilon) {
+        LOG_ERROR("After " << i << " iterations, ");
+        LOG_ERROR("Goldstein search converged to a local minimum");
+        return GoldsteinStatus::Success;
+      }
+      x_ = x_new;
+    }
+    return GoldsteinStatus::Failure;
+  }
+
+private:
+  Function f_;
+  X x_;
+
+  // Parameters
+  GoldsteinParameters params_;
+};
+*/
+
+} //   namespace gons
+#endif
