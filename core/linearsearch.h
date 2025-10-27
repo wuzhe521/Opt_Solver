@@ -30,50 +30,55 @@ public:
   X get_x() const { return x_; }
   double get_function_value() const { return f_(x_); }
   X ArmijoRule() {
-    const double min_alpha =
+    const double min_beta =
         1e-10; // Minimum alpha to avoid numerical instability
 
     GONS_UINT iteration = 0;
 
     while (iteration < params_.max_inner_iter) {
-      double alpha = params_.alpha;
+      double beta = params_.beta;
       // Check if alpha is too small
-      if (params_.alpha < min_alpha) {
+      if (params_.beta < min_beta) {
         break;
       }
 
       // Cache gradient to avoid repeated computation
       X gradient = f_.gradient(x_);
       double f_x = f_(x_);
-      double f_x_new = f_(x_ - alpha * gradient);
-      if (f_x_new < f_x - params_.beta * alpha * gradient.Norm2()) {
+      double f_x_new = f_(x_ - beta * gradient);
+      if (f_x_new < f_x - params_.alpha * beta * gradient.Norm2()) {
         // Armijo condition is satisfied
-        return x_ - alpha * gradient;
+        params_.beta = beta;
+        return x_ - beta * gradient;
       }
       // Update alpha for next iteration
-      alpha *= params_.gamma;
+      beta *= params_.gamma;
       if (params_.enable_max_iter)
         iteration++;
     }
-    return x_ - params_.alpha * f_.gradient(x_);
+    return x_ - params_.beta * f_.gradient(x_);
   }
   ArmijoStatus Optimize() {
     LOG(SOLVER_HEADER);
     GONS_UINT i = 0;
     while (true) {
       ++i;
-      if (params_.enable_max_iter)
-        if (i >= params_.max_iter)
-          break;
+      if (params_.enable_max_iter && i >= params_.max_iter) {
+        LOG_ERROR("Max iterations reached: " << params_.max_iter);
+        break;
+      }
       X x_new = ArmijoRule();
+      double f_old = f_(x_);
+      double f_new = f_(x_new);
+      double grad_norm = f_.gradient(x_).Norm2();
       if (params_.print_info) {
         LOG("Iteration: " << i);
-        LOG_WARNING("Function value last: " << f_(x_));
-        LOG_WARNING("Function value new: " << f_(x_new));
-        LOG_WARNING("Gradient Norm2: " << f_.gradient(x_).Norm2());
+        LOG_WARNING("Function value last: " << f_old);
+        LOG_WARNING("Function value new: " << f_new);
+        LOG_WARNING("Gradient Norm2: " << grad_norm);
         LOG_ERROR("x: " << x_);
       }
-      if (std::abs(f_(x_new) - f_(x_)) < params_.epsilon) {
+      if (std::abs(f_new - f_old) < params_.epsilon) {
         LOG_ERROR("After " << i << " iterations, ");
         LOG_ERROR("Armijo search converged to a local minimum");
         return ArmijoStatus::Success;
@@ -116,20 +121,30 @@ public:
   X Search() {
     // Implementation of Goldstein search
     const double min_alpha =
-        1e-10; // Minimum alpha to avoid numerical instability
+        1e-10; // Minimum alpha to avoid numerical instability]
+    GONS_UINT iteration = 0;
+    double alpha = params_.alpha;
     while (true) {
       //
       X gradient = f_.gradient(x_);
       double f_x = f_(x_);
       double f_x_new = f_(x_ - params_.alpha * gradient);
-      if (f_x_new < f_x - params_.beta * params_.alpha * gradient.Norm2() &&
-          f_x_new >
-              f_x - (1 - params_.alpha) * params_.beta * gradient.Norm2()) {
+      if (f_x_new <=
+          f_x - (1 - params_.alpha) * params_.beta * gradient.Norm2()) {
         //
-        return x_;
+        alpha *= (1 + params_.gamma);
       }
-      params_.alpha *= params_.gamma;
-
+      if (f_x_new >= f_x - params_.alpha * params_.beta * gradient.Norm2()) {
+        alpha *= params_.gamma;
+      }
+      if (f_x_new < f_x - params_.beta * alpha * gradient.Norm2() &&
+          f_x_new > f_x - (1 - alpha) * params_.beta * gradient.Norm2()) {
+        break;
+      }
+      if (alpha < min_alpha) {
+        break;
+      }
+      x_ -= params_.alpha * gradient;
     }
   }
   GoldsteinStatus Optimize() {
@@ -164,8 +179,7 @@ private:
 
   // Parameters
   GoldsteinParameters params_;
-};
-*/
+};*/
 
 } //   namespace gons
 #endif
