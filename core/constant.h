@@ -5,7 +5,7 @@
 #define GONS_VERSION "1.0.0"
 
 const char *SOLVER_HEADER =
-    " =================================================== \n\
+" =================================================== \n\
 |  GONS: General Opensource Numerical Solver        |\n\
 |  Version: 1.0.0                                   |\n\
 |  Author: Wu                                       |\n\

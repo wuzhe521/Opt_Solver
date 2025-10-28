@@ -25,7 +25,6 @@ int main( int argc, char* argv[] )
     TestFunction f;
     X x = {1.0, 1.0};
     gons::GradientDescentSearch<TestFunction, X> gd(f, x);
-
     gd.Optimize();
 
     return 0;
