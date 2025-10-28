@@ -13,8 +13,8 @@ const char *SOLVER_HEADER =
 |  GONS is licensed under the MIT License.          |\n\
 |  Copyright (c) 2025 <Wu>. All rights reserved.    |\n\
 |  [Warnning]:                                      |\n\
-|             Dont expect me to be responsible for  |\n\
-|             any damages caused by this software.  |\n\
-|             So, use it at your own risk.          |\n\
+|             This software is still in development.|\n\
+|             A lot of features are not implemented.|\n\
+|             Please do not use it in production.   |\n\
  =================================================== \n ";
 #endif //  GONS_CONSTANT_H_
