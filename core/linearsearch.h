@@ -63,11 +63,10 @@ public:
   X Search(const X &x0, const Function &f) {
     const double min_beta =
         1e-10; // Minimum alpha to avoid numerical instability
-
     GONS_UINT iteration = 0;
-
+    double beta = params_.beta;
     while (iteration < params_.max_inner_iter) {
-      double beta = params_.beta;
+
       // Check if alpha is too small
       if (params_.beta < min_beta) {
         break;
@@ -80,14 +79,15 @@ public:
       if (f_x_new < f_x - params_.alpha * beta * gradient.Norm2()) {
         // Armijo condition is satisfied
         params_.beta = beta;
-        return x0 - beta * gradient;
+        return beta;
       }
       // Update alpha for next iteration
       beta *= params_.gamma;
       if (params_.enable_max_iter)
         iteration++;
     }
-    return x0 - params_.beta * f.gradient(x0);
+    params_.beta = beta;
+    return beta;
   }
   ArmijoStatus Optimize() {
     LOG(SOLVER_HEADER);
@@ -149,8 +149,9 @@ public:
 
   X GoldsteinRule() {
     // Implementation of Goldstein search
-    const double min_beta = 1e-10; // Minimum beta to avoid numerical instability
-    const double max_beta = 1.0;   // Maximum beta to avoid divergence
+    const double min_beta =
+        1e-10;                   // Minimum beta to avoid numerical instability
+    const double max_beta = 1.0; // Maximum beta to avoid divergence
     GONS_UINT iteration = 0;
     double beta = params_.beta;
     X gradient = f_.gradient(x_);
@@ -159,7 +160,8 @@ public:
 
     while (true) {
       ++iteration;
-      if (iteration > params_.max_inner_iter || beta < min_beta || beta > max_beta) {
+      if (iteration > params_.max_inner_iter || beta < min_beta ||
+          beta > max_beta) {
         break;
       }
 
@@ -173,30 +175,32 @@ public:
     }
     return x_ - params_.alpha * gradient;
   }
-  X Search(const X &x0, const Function &f) {
+  double Search(const X &x0, const Function &f) {
     // Implementation of Goldstein search
-    const double min_beta = 1e-10; // Minimum beta to avoid numerical instability
-    const double max_beta = 1.0;   // Maximum beta to avoid divergence
+    const double min_beta =
+        1e-10;                   // Minimum beta to avoid numerical instability
+    const double max_beta = 1.0; // Maximum beta to avoid divergence
     GONS_UINT iteration = 0;
     double beta = params_.beta;
     X gradient = f.gradient(x0);
     double f_x = f(x0);
     double gradient_norm = gradient.Norm2();
-    
+
     while (true) {
       ++iteration;
-      if (iteration > params_.max_inner_iter || beta < min_beta || beta > max_beta) {
+      if (iteration > params_.max_inner_iter || beta < min_beta ||
+          beta > max_beta) {
         break;
       }
       double f_x_new = f(x0 - beta * gradient);
       if (f_x_new < f_x - beta * params_.alpha * gradient_norm &&
           f_x_new > f_x - (1 - params_.alpha) * beta * gradient_norm) {
         params_.beta = beta;
-        return x0 - params_.alpha * gradient;
-      }  
+        return beta;
+      }
       beta *= params_.gamma;
     }
-    return x0 - params_.alpha * gradient;
+    return beta;
   }
   GoldsteinStatus Optimize() {
     LOG(SOLVER_HEADER);
@@ -282,14 +286,14 @@ public:
         }
       } else {
         // Neither condition satisfied, increase beta
-        beta *= params_.beta;
+        beta *= params_.gamma * 1.1;
       }
     }
     params_.beta = beta;
     return x_ - beta * f_.gradient(x_);
   }
 
-  X Search(Function f, X x) {
+  double Search(Function f, X x) {
     const double min_beta = 1e-10;
     GONS_UINT iteration = 0;
     double beta = params_.beta;
@@ -311,21 +315,17 @@ public:
         if (-gradient_new.Norm2() > -params_.alpha_2 * gradient.Norm2()) {
           // Wolfe condition satisfied
           params_.beta = beta;
-          return x - beta * gradient;
+          return beta;
         } else {
           // Only Armijo condition satisfied, decrease beta
           beta *= params_.gamma;
-          
         }
       } else {
         // Armijo condition not satisfied, increase beta
-        beta *= params_.delta;
-
+        beta *= params_.gamma * 1.1;
       }
-      params_.beta = beta;
-      return x - beta * f.gradient(x);
     }
-    return x - beta * f.gradient(x);
+    return beta;
   }
   WolfeStatus Optimize() {
     LOG(SOLVER_HEADER);
