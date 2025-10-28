@@ -60,7 +60,7 @@ public:
   }
   // in order to use the same search rule for different function, we need to
   // pass the function and initial point as arguments
-  X Search(const X &x0, const Function &f) {
+  double Search(const X &x0, const Function &f) {
     const double min_beta =
         1e-10; // Minimum alpha to avoid numerical instability
     GONS_UINT iteration = 0;
