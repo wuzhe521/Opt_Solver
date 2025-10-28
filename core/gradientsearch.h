@@ -74,9 +74,8 @@ public:
   }
 
 private:
-
-  X x_;
   Function f_;
+  X x_;
   ArmijoSearch<Function, X> linear_search_;
   gradient_descent_parameters parameters_;
 
