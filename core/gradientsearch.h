@@ -17,7 +17,8 @@ using namespace gons::utilites::LOG_MSG;
 template <typename Function, typename X> class GradientDescentSearch {
   struct gradient_descent_parameters {
     double tolerance = 1.0e-6;
-    int max_iterations = 1000;
+    GONS_UINT max_iterations = 1000;
+    bool verbose = false;
   };
   enum class gradient_descent_state { SUCCESS, FAILURE, MAX_ITERATION_REACHED };
 
@@ -30,7 +31,6 @@ public:
   void set_params(const gradient_descent_parameters &parameters) {
     parameters_ = parameters;
   }
-
   double SearchStep(const X &x, const Function &f) {
     return linear_search_.Search(x, f);
   }
@@ -48,8 +48,13 @@ public:
 
       // 更新x
       X x_new = x_ - step * gradient;
-
-      // 检查收敛性
+      if (parameters_.verbose) // 打印信息
+      {
+        LOG("Iteration: " << iter);
+        LOG("x = " << x_);
+        LOG("f(x) = " << f_(x_));
+        LOG("Step = " << step);
+      }
       if (std::abs(f_(x_new) - f_(x_)) < tolerance) {
         LOG_WARNING("After " << iter << " iterations");
         LOG_WARNING("Gradient descent converged.");
@@ -73,7 +78,6 @@ private:
   X x_;
   Function f_;
   ArmijoSearch<Function, X> linear_search_;
-
   gradient_descent_parameters parameters_;
 
 };
