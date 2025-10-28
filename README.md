@@ -12,4 +12,7 @@
 
 [Opt_Solver](https://github.com/wuzhe521/Opt_Solver) is a lightweight header-only C++ library for numerical optimization. It provides a set of numerical optimization algorithms, including gradient descent, conjugate gradient, Newton's method, Levenberg-Marquardt, BFGS, and more. It is designed to be easy to use and efficient.
 
+![](./doc/pics/nonConvex_fig.png)
+
+
 <font size="5" color = "blue">  There will be a time to ride the wind and waves, and set sail to cross the vast ocean. </font>
