@@ -47,3 +47,98 @@ plt.show()
 运行结果如下：
 
 ![](./pics/gradient_py.png)
+
+在以上算法的基础上，将固定步长改为自适应步长，步长的求解方式采用线搜索方法的Armijo方法，就实现了梯度类算法，
+总体逻辑：
+1. 输入初始点 $x_0$，初始步长 $\alpha_0$，最大迭代次数 $max\_iter$，步长缩减因子 $\beta$，步长增加因子 $\gamma$，精度 $\epsilon$
+2. 迭代 $i = 0, 1, 2, ..., max\_iter$ 
+3. 计算当前点 $x_i$ 的一阶导数 $g_i$, 函数值 $f_i$,
+4. 根据当前点 $x_i$ 的函数值 $f_i$ 和导数 $g_i$，用线搜算法计算当前点 $x_i$ 的下降步长 $\beta_i$
+5. 更新 $x_{i+1} = x_i - \beta_i g_i$
+6. 判断当前点 $x_{i+1}$ 的函数值 $f_{i+1}$ 和上一次点 $x_i$ 的函数值 $f_i$差是否小于精度 $\epsilon$，小于则迭代结束，否则继续迭代
+梯度类算法的实现代码如下：
+```cpp
+template <typename Function, typename X> class GradientDescentSearch {
+  struct gradient_descent_parameters {
+    double tolerance = 1.0e-6;
+    GONS_UINT max_iterations = 1000;
+    bool verbose = false;
+  };
+  enum class gradient_descent_state { SUCCESS, FAILURE, MAX_ITERATION_REACHED };
+
+public:
+  // Corrected constructor with matching initialization order
+  GradientDescentSearch(const Function &f, const X &x) 
+      : f_(f), x_(x), linear_search_(f, x){}
+
+  ~GradientDescentSearch() = default;
+  void set_params(const gradient_descent_parameters &parameters) {
+    parameters_ = parameters;
+  }
+  double SearchStep(const X &x, const Function &f) {
+    return linear_search_.Search(x, f);
+  }
+  gradient_descent_state Optimize() {
+    GONS_UINT iter = 0;
+    GONS_UINT max_iter = parameters_.max_iterations;
+    GONS_FLOAT tolerance = parameters_.tolerance;
+
+    while (iter < max_iter) {
+      // 计算梯度
+      X gradient = f_.gradient(x_);
+
+      // 计算步长
+      double step = SearchStep(x_, f_);
+
+      // 更新x
+      X x_new = x_ - step * gradient;
+      if (parameters_.verbose) // 打印信息
+      {
+        LOG("Iteration: " << iter);
+        LOG("x = " << x_);
+        LOG("f(x) = " << f_(x_));
+        LOG("Step = " << step);
+      }
+      if (std::abs(f_(x_new) - f_(x_)) < tolerance) {
+        LOG_WARNING("After " << iter << " iterations");
+        LOG_WARNING("Gradient descent converged.");
+        LOG_WARNING("x = " << x_);
+        LOG_WARNING("f(x) = " << f_(x_));
+        return gradient_descent_state::SUCCESS;
+      }
+
+      x_ = x_new;
+      iter++;
+    }
+    LOG_WARNING("After " << iter << " iterations");
+    LOG_WARNING("Gradient descent did not converge.");
+    LOG_WARNING("x = " << x_);
+    LOG_WARNING("f(x) = " << f_(x_));
+    return gradient_descent_state::MAX_ITERATION_REACHED;
+  }
+
+private:
+  Function f_;
+  X x_;
+  ArmijoSearch<Function, X> linear_search_;
+  gradient_descent_parameters parameters_;
+
+};
+```
+测试代码如下：
+```cpp
+TestFunction f;
+X x = {1.0, 1.0};
+gons::GradientDescentSearch<TestFunction, X> gd(f, x);
+gd.Optimize();
+```
+运行结果如下：
+```bash
+After 14 iterations
+Gradient descent converged.
+x = 0.000783642 0.000783642 
+f(x) = 1.22819e-06
+```
+## Barzilai-Borwein 方法
+当问题的条件数很大，也即问题比较病态时，梯度下降法的收敛性质会受到很大影响。
+Barzilai-Borwein 方法是一种基于梯度下降法的方法，其基本思路是使用梯度下降法的方向和步长来更新参数，而不是使用一阶导数来更新参数。

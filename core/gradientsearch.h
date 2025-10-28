@@ -31,6 +31,9 @@ public:
   void set_params(const gradient_descent_parameters &parameters) {
     parameters_ = parameters;
   }
+  void set_linear_search_params(const typename ArmijoSearch<Function, X>::ArmijoParameters &parameters) {
+    linear_search_.set_params(parameters);
+  }
   double SearchStep(const X &x, const Function &f) {
     return linear_search_.Search(x, f);
   }
