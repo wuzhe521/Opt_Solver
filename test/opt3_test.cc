@@ -11,9 +11,7 @@ public:
 
   double operator()(const X &x) const { return x(0) * x(0) + 10 * x(1) * x(1); }
   X gradient(const X &x) const { return {2 * x(0), 20 * x(1)}; }
-  M hessian(const X &x) const {
-    return {{2, 0}, {0, 20}};
-  }
+  M hessian(const X &x) const { return {{2, 0}, {0, 20}}; }
 };
 
 int main(int argc, char *argv[]) {
