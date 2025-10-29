@@ -224,24 +224,19 @@ public:
     Matrix<T, R, 2 *C> Augmented = this->Augment();
     for (GONS_UINT i = 0; i < R; ++i) {
       GONS_UINT max_row = findMaxInColunmIndex(i, Augmented);
-      SHW("max_row: ") << max_row << "\n";
       if (max_row != i) {
         swapRow(i, max_row, Augmented);
       }
       CHECK(std::abs(Augmented(i, i)) < GONS_FLT_EPSILON, "Singular matrix!");
       T scale = T(1) / Augmented(i, i);
-      SHW(scale) << "scale: " << scale << "\n";
       scaleRow(i, scale, Augmented);
-      Augmented.Print("Augmented A:\n");
       for (GONS_UINT j = 0; j < R; ++j) {
         if (j == i)
           continue;
         T eleminator = -Augmented(j, i);
         addRow(j, i, eleminator, Augmented);
       }
-      Augmented.Print("Augmented B:\n");
     }
-    Augmented.Print("Augmented:\n");
     for (GONS_UINT i = 0; i < R; ++i) {
       for (GONS_UINT j = R; j < 2 * R; ++j) {
         result(i, j - R) = Augmented(i, j);
