@@ -1,9 +1,9 @@
 #ifndef GONS_CORE_VECTOR_H_
 #define GONS_CORE_VECTOR_H_
 
+#include "config.h"
 #include "matrix.h"
 #include "utilites.h"
-#include "config.h"
 
 namespace gons {
 
@@ -46,9 +46,7 @@ public:
     return *this;
   }
   T &operator()(GONS_UINT i) { return this->data_[0][i]; }
-  const T &operator()(GONS_UINT i) const {
-    return this->data_[0][i];
-  } 
+  const T &operator()(GONS_UINT i) const { return this->data_[0][i]; }
 
   T dot(const Vector<T, N> &v) {
     T result = 0;
