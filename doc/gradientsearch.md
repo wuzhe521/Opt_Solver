@@ -142,15 +142,22 @@ f(x) = 1.22819e-06
 ```
 
 ## 条件数对求解的影响
-我们依次画出函数 $f(x) = x_1^2 + y^2$,   $f(x) = x_1^2 + 2* y^2$,   $f(x) = x_1^2 + 5 *y^2$ 和$f(x) = x_1^2 + 10* y^2$ 的梯度下降路径:
+我们依次画出函数 $f(x) = x^2 + y^2$,   $f(x) = x^2 + 2* y^2$,   $f(x) = x^2 + 5 *y^2$ 和$f(x) = x^2 + 10* y^2$ 的梯度下降路径:
 <div align="center">
 <img src="./pics/gradient_py_1.png" width="300" height="300" alt="条件数1"> 
 <img src="./pics/gradient_py_2.png" width="300" height="300" alt="条件数2"> 
 <img src="./pics/gradient_py_5.png" width="300" height="300" alt="条件数5"> 
 <img src="./pics/gradient_py_10.png" width="300" height="300" alt="条件数10"> 
 </div>
-可以看到，当条件数越大，梯度下降法的收敛速度越慢，当条件数越小时，梯度下降法的收敛速度越快。因为条件数越大，意味着在某个维度上，函数的变化越剧烈，在梯度下降法中，梯度越剧烈，下降的步长越大，因此梯度下降法的收敛速度越慢。
+将函数写成矩阵形式表达， 可以得到：
+
+$$ f_1(x) = \begin{bmatrix} x \\ y \end{bmatrix}^T \begin{bmatrix} 1 & 0 \\ 0 & 1 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} $$  
+$$ f_2(x) = \begin{bmatrix} x \\ y \end{bmatrix}^T \begin{bmatrix} 1 & 0 \\ 0 & 2 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} $$  
+$$ f_3(x) = \begin{bmatrix} x \\ y \end{bmatrix}^T \begin{bmatrix} 1 & 0 \\ 0 & 5 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} $$  
+$$ f_4(x) = \begin{bmatrix} x \\ y \end{bmatrix}^T \begin{bmatrix} 1 & 0 \\ 0 & 10 \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} $$  
+
+可以看到，当Hessin矩阵的条件数$k = \lambda_{max}/\lambda_{min}$越大，梯度下降法的收敛速度越慢，当条件数越小时，梯度下降法的收敛速度越快。因为条件数越大，意味着在某个维度上，函数的变化越剧烈，在梯度下降法中，梯度越剧烈，下降的步长越大，因此梯度下降法的收敛速度越慢。
 
 ## Barzilai-Borwein 方法
-当问题的条件数很大，也即问题比较病态时，梯度下降法的收敛性质会受到很大影响。
+因为，当问题的条件数很大，也即问题比较病态时，梯度下降法的收敛性质会受到很大影响。
 Barzilai-Borwein 方法是一种基于梯度下降法的方法，其基本思路是使用梯度下降法的方向和步长来更新参数，而不是使用一阶导数来更新参数。
