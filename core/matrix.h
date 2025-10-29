@@ -55,15 +55,16 @@ public:
     GONS_UINT i = 0;
     GONS_UINT j = 0;
     for (const auto &elem : init_list) {
-        data_[i][j] = elem;
-        ++j;
-        if (j == C) {
-            ++i;
-            j = 0;
-        }
-        CHECK(i > R, "Initializer list has more rows than matrix");
+      data_[i][j] = elem;
+      ++j;
+      if (j == C) {
+        ++i;
+        j = 0;
+      }
+      CHECK(i > R, "Initializer list has more rows than matrix");
     }
   }
+
 public:
   //  Get pointer to the underlying data
   T *get() { return &data_[0][0]; }

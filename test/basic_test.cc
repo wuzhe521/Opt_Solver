@@ -69,7 +69,5 @@ int main() {
   gons::Matrix<float, 2, 2> M9 = M8.Inverse();
   M9.Print("M8 Inverse() : \n");
 
-
-
   return 0;
 }

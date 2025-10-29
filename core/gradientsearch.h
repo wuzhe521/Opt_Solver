@@ -110,7 +110,8 @@ template <typename Function, typename X> class BarzilaiBorwein {
   enum class BarzilaiBorweinStatus { SUCCESS, FAILURE, MAX_ITERATION_REACHED };
 
 public:
-  BarzilaiBorwein(const Function &f, const X &x) : f_(f), lastGradient_(x), lastX_(x) {
+  BarzilaiBorwein(const Function &f, const X &x)
+      : f_(f), lastGradient_(x), lastX_(x) {
     lastGradient_ = f_.gradient(lastX_);
   }
   double SearchStep(const X &x_new, const X &grad_new, const Function &f) {
@@ -154,13 +155,11 @@ public:
       double step = SearchStep(x_new, gradient_new, f_);
 
       // 限制步长在合理范围内
-      parameters_.alpha = step > parameters_.alpha_upper
-                        ? parameters_.alpha_upper
-                        : step;
-      parameters_.alpha = step < parameters_.alpha_lower
-                        ? parameters_.alpha_lower
-                        : step;
-    
+      parameters_.alpha =
+          step > parameters_.alpha_upper ? parameters_.alpha_upper : step;
+      parameters_.alpha =
+          step < parameters_.alpha_lower ? parameters_.alpha_lower : step;
+
       // 更新x 和梯度
       lastX_ = x_new;
       lastGradient_ = gradient_new;

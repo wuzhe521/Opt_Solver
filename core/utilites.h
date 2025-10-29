@@ -2,15 +2,14 @@
 #define GONS_CORE_UTILITES_H_
 
 #include "config.h"
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 
 namespace gons {
 namespace utilites {
 // LOG METHOD   need to be adapted according to platform
 namespace LOG_MSG {
 
-  
 const char *const ERROR_PREFIX = "ERROR: ";
 const char *const WARNING_PREFIX = "WARNING: ";
 
