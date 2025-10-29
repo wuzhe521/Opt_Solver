@@ -7,6 +7,8 @@
 
 namespace gons {
 
+template <typename T, GONS_UINT R, GONS_UINT C> class Matrix;
+
 template <typename T, GONS_UINT N> class Vector : public Matrix<T, 1, N> {
   using Matrix<T, 1, N>::Matrix;
 
@@ -55,7 +57,62 @@ public:
     }
     return result;
   }
+  Vector<T, N> operator+(const Vector<T, N> &v) const {
+    Vector<T, N> result;
+    for (GONS_UINT i = 0; i < N; i++) {
+      result(i) = this->data_[0][i] + v(i);
+    }
+    return result;
+  }
+  Vector<T, N> operator-(const Vector<T, N> &v) const {
+    Vector<T, N> result;
+    for (GONS_UINT i = 0; i < N; i++) {
+      result(i) = this->data_[0][i] - v(i);
+    }
+    return result;
+  }
+  Vector<T, N> operator+=(const Vector<T, N> &v) {
+    for (GONS_UINT i = 0; i < N; i++) {
+      this->data_[0][i] += v(i);
+    }
+    return *this;
+  }
+  Vector<T, N> operator-=(const Vector<T, N> &v) {
+    for (GONS_UINT i = 0; i < N; i++) {
+      this->data_[0][i] -= v(i);
+    }
+    return *this;
+  }
+  Vector<T, N> operator*(const T &t) const {
+    Vector<T, N> result;
+    for (GONS_UINT i = 0; i < N; i++) {
+      result(i) = this->data_[0][i] * t;
+    }
+    return result;
+  }
+  Vector<T, N> operator/(const T &t) const {
+    Vector<T, N> result;
+    for (GONS_UINT i = 0; i < N; i++) {
+      result(i) = this->data_[0][i] / t;
+    }
+    return result;
+  }
+
+  // vector multiply matrix
+  template <typename Type, GONS_UINT R, GONS_UINT C>
+  Matrix<T, R, C> operator*(const Matrix<T, R, C> &m) const {
+    CHECK(C != N, "Matrix size mismatch");
+    Matrix<T, R, C> result;
+    for (GONS_UINT i = 0; i < R; i++) {
+      for (GONS_UINT j = 0; j < C; j++) {
+        result(i, j) = 0;
+        for (GONS_UINT k = 0; k < N; k++) {
+          result(i, j) += this->data_[0][k] * m(k, j);
+        }
+      }
+    }
+    return result;
+  }
 };
 } // namespace gons
-
 #endif // GONS_CORE_VECTOR_H_

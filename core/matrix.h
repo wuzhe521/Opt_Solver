@@ -11,6 +11,9 @@
 namespace gons {
 using namespace utilites::LOG_MSG;
 
+template<typename T, GONS_UINT R>
+class Vector;
+
 template <typename T, GONS_UINT R, GONS_UINT C> class Matrix {
 protected:
   T data_[R][C] = {0};
@@ -293,6 +296,19 @@ public:
     return os;
   }
 #endif
+
+
+  // matrix multiply vector
+  Vector<T, R> operator*(const Vector<T, C>&vec) const{
+    CHECK(C != vec.rows(), "matrix and vector size not match!");
+    Vector<T, R> result;
+    for (GONS_UINT i = 0; i < R; i++) {
+      for (GONS_UINT j = 0; j < C; j++) {
+        result(i) += (*this)(i, j) * vec(j);
+      }
+    }
+    return result;
+  }
 }; // class Matrix End
 
 } // namespace gons
