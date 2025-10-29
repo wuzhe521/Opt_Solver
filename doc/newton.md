@@ -21,3 +21,73 @@ $$x^{k+1} = x^k - \bigtriangledown^2 f^k(x)^{-1} \bigtriangledown f^k(x)$$
 
 给出 代码实现：
 ```cpp
+template <typename Function, typename X> class NewtonMethod {
+public:
+  struct NewtonParameters {
+    double tolerance = 1.0e-6;
+    GONS_UINT max_iterations = 3;
+    bool verbose = true;
+  };
+  enum class NewtonStatus { Success, Failure, MaxIterationReached };
+
+public:
+  NewtonMethod(const Function &f, const X &x) : f_(f), x_(x) {}
+
+  // compute search direction
+  X Search(const X &x, const Function &f) {
+    X gradient = f.gradient(x);
+   
+    gons::Matrix hessian = f.hessian(x);
+    
+    // gons::Matrix hessian_inv = hessian.Inverse();
+    X neg_gradient = gradient * -1;
+    // Solve for step: hessian * step = -gradient
+    auto step = SolveLinearSystem(hessian, neg_gradient);
+    return step;
+  }
+
+  void Optimize() {
+    for (int i = 0; i < param_.max_iterations; ++i) {
+      X gradient = Search(x_, f_);
+      x_ += gradient;
+      if (gradient.Norm2() < param_.tolerance) {
+        LOG("After " << i << " iterations, ");
+        LOG("Newton method converged.");
+        LOG("Final solution: " << x_);
+        LOG("Final gradient: " << gradient);
+        LOG("Final function value: " << f_(x_));
+        return;
+      }
+      if (param_.verbose) {
+        LOG("Iteration: " << i);
+        LOG("x = " << x_);
+        LOG("f(x) = " << f_(x_));
+        LOG("Gradient: " << gradient);
+      }
+    }
+    LOG("After " << param_.max_iterations << " iterations, ");
+    LOG("Newton method did not converge.");
+  }
+
+private:
+  Function f_;
+  X x_;
+  NewtonParameters param_;
+};
+```
+测试函数仍采用 $f(x) = x^2 + 10y^2 $,   测试代码：
+```cpp
+TestFunction f;
+X x = {10, 10};
+gons::NewtonMethod<TestFunction, X> nm(f, x);
+nm.Optimize();
+```
+输出结果：
+```bash
+After 1 iterations, 
+Newton method converged.
+Final solution: 0 0 
+Final gradient: 0 0 
+Final function value: 0
+```
+测试结果表明，Newton方法在给定初始点x = [10, 10]时，在1次迭代后收敛，最终的解为[0, 0]，并且函数值最小为0。
