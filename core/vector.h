@@ -48,7 +48,15 @@ public:
   T &operator()(GONS_UINT i) { return this->data_[0][i]; }
   const T &operator()(GONS_UINT i) const {
     return this->data_[0][i];
-  } // namespace gons
+  } 
+
+  T dot(const Vector<T, N> &v) {
+    T result = 0;
+    for (GONS_UINT i = 0; i < N; i++) {
+      result += this->data_[0][i] * v(i);
+    }
+    return result;
+  }
 };
 } // namespace gons
 

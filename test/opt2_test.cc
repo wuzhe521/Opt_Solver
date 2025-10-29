@@ -9,11 +9,11 @@ public:
     ~TestFunction() = default;
     
     double operator()(const X& x) const {
-        return x(0) * x(0) + x(1) * x(1);
+        return x(0) * x(0) + 10 * x(1) * x(1);
     }
     X gradient(const X& x) const {
         
-        return {2 * x(0), 2 * x(1)};
+        return {2 * x(0), 20 * x(1)};
     }
 };
 
@@ -23,9 +23,13 @@ int main( int argc, char* argv[] )
     UNUSED(argv);
 
     TestFunction f;
-    X x = {1.0, 1.0};
+    X x = {10, 10};
     gons::GradientDescentSearch<TestFunction, X> gd(f, x);
     gd.Optimize();
+
+
+    gons::BarzilaiBorwein<TestFunction, X> bb(f, x);
+    bb.Optimize();
 
     return 0;
 }

@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include <iostream>
+#include <algorithm>
 
 namespace gons {
 namespace utilites {
@@ -67,6 +68,15 @@ const char *const WARNING_PREFIX = "WARNING: ";
 
 // Get Version
 inline const char *GetVersion() { return GONS_VERSION; }
+
+// Float Equal
+#define FLT_EQUAL(a, b) (std::abs(a - b) < GONS_FLT_EPSILON)
+
+// Float Not Equal
+#define FLT_NOT_EQUAL(a, b) (std::abs(a - b) >= GONS_FLT_EPSILON)
+
+// Float Equal to Zero
+#define FLT_EQUAL_ZERO(a) (std::abs(a) < GONS_FLT_EPSILON)
 
 } // namespace utilites
 } // namespace gons

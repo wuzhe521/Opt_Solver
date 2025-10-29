@@ -6,7 +6,7 @@
 
 
 // ==== Floating Point Precision ====
-#define GONS_FLT_EPSILON 1.0e-6f
+#define GONS_FLT_EPSILON 1.0e-9f
 
 // ==== Feature Toggles ====
 #define ENABLE_PRINT_MATRIX 1

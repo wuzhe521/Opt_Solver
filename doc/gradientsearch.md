@@ -161,3 +161,130 @@ $$ f_4(x) = \begin{bmatrix} x \\ y \end{bmatrix}^T \begin{bmatrix} 1 & 0 \\ 0 & 
 ## Barzilai-Borwein 方法
 因为，当问题的条件数很大，也即问题比较病态时，梯度下降法的收敛性质会受到很大影响。
 Barzilai-Borwein 方法是一种基于梯度下降法的方法，其基本思路是使用梯度下降法的方向和步长来更新参数，而不是使用一阶导数来更新参数。
+Barzilai-Borwein 方法的实现代码如下：
+```cpp
+template <typename Function, typename X> class BarzilaiBorwein {
+  enum class SearchMethod { BB1, BB2 };
+  struct BarzilaiBorweinParameters {
+    // linear search rule parameters
+    double c = 0.1;
+    double beta = 0.333;
+    // limit step size in a reasonable range
+    double alpha_upper = 1e10;
+    double alpha_lower = 1e-10;
+    // initial step size
+    double alpha = 0.01;
+    // gradient descent parameters
+    double tolerance = 1.0e-6;
+    int max_iterations = 10;
+
+    bool verbose = false;
+    SearchMethod method = SearchMethod::BB2;
+  };
+  enum class BarzilaiBorweinStatus { SUCCESS, FAILURE, MAX_ITERATION_REACHED };
+
+public:
+  BarzilaiBorwein(const Function &f, const X &x) : f_(f), lastGradient_(x), lastX_(x) {
+    lastGradient_ = f_.gradient(lastX_);
+  }
+  double SearchStep(const X &x_new, const X &grad_new, const Function &f) {
+
+    X s_k1 = x_new - lastX_;
+    X y_k1 = grad_new - lastGradient_;
+
+    double alpha = 1.0;
+
+    switch (parameters_.method) {
+    case SearchMethod::BB1: {
+      // 检查分母是否为零
+      FLT_EQUAL_ZERO(y_k1.dot(y_k1));
+      alpha = s_k1.dot(y_k1) / y_k1.dot(y_k1);
+      break;
+    }
+    case SearchMethod::BB2: {
+      // 检查分母是否为零
+      FLT_EQUAL_ZERO(y_k1.dot(y_k1));
+      alpha = s_k1.dot(s_k1) / s_k1.dot(y_k1);
+      break;
+    }
+    default:
+      LOG_WARNING("Unsupported search method.");
+      return 0.0;
+    }
+    return alpha;
+  }
+
+  // 优化方法
+  BarzilaiBorweinStatus Optimize() {
+    int iter = 0;
+
+    while (iter < parameters_.max_iterations) {
+      //
+      X x_new = lastX_ - parameters_.alpha * lastGradient_;
+      // 计算梯度
+      X gradient_new = f_.gradient(x_new);
+
+      // 更新x
+      double step = SearchStep(x_new, gradient_new, f_);
+
+      // 限制步长在合理范围内
+      parameters_.alpha = step > parameters_.alpha_upper
+                        ? parameters_.alpha_upper
+                        : step;
+      parameters_.alpha = step < parameters_.alpha_lower
+                        ? parameters_.alpha_lower
+                        : step;
+    
+      // 更新x 和梯度
+      lastX_ = x_new;
+      lastGradient_ = gradient_new;
+
+      iter++;
+      if (parameters_.verbose) // 打印信息
+      {
+        LOG("Iteration: " << iter);
+        LOG("x = " << lastX_);
+        LOG("f(x) = " << f_(lastX_));
+        LOG("Step = " << step);
+      }
+
+      // 检查梯度是否足够小
+      if (lastGradient_.Norm2() < parameters_.tolerance) {
+        LOG_WARNING("After " << iter << " iterations");
+        LOG_WARNING("Barzilai-Borwein converged.");
+        LOG_WARNING("x = " << lastX_);
+        LOG_WARNING("f(x) = " << f_(lastX_));
+        return BarzilaiBorweinStatus::SUCCESS;
+      }
+    }
+
+    // 检查是否达到最大迭代次数
+    if (iter == parameters_.max_iterations) {
+      LOG_WARNING("After " << iter << " iterations");
+      LOG_WARNING("Barzilai-Borwein did not converge.");
+      LOG_WARNING("x = " << lastX_);
+      LOG_WARNING("f(x) = " << f_(lastX_));
+      return BarzilaiBorweinStatus::MAX_ITERATION_REACHED;
+    }
+  }
+
+private:
+  Function f_;
+  X lastGradient_;
+  X lastX_;
+  BarzilaiBorweinParameters parameters_;
+};
+```
+测试代码如下：
+```cpp
+gons::BarzilaiBorwein<TestFunction, X> bb(f, x);
+bb.Optimize();
+```
+运行结果如下：
+```bash
+After 9 iterations
+Barzilai-Borwein converged.
+x = 5.81481e-13 1.83207e-23 
+f(x) = 3.3812e-25
+```
+[注：BB 方法在实践中，无论选BB1 还是 BB2，收敛速度和精度都比梯度下降法要好。]
