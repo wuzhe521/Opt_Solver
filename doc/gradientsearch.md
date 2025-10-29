@@ -161,6 +161,21 @@ $$ f_4(x) = \begin{bmatrix} x \\ y \end{bmatrix}^T \begin{bmatrix} 1 & 0 \\ 0 & 
 ## Barzilai-Borwein 方法
 因为，当问题的条件数很大，也即问题比较病态时，梯度下降法的收敛性质会受到很大影响。
 Barzilai-Borwein 方法是一种基于梯度下降法的方法，其基本思路是使用梯度下降法的方向和步长来更新参数，而不是使用一阶导数来更新参数。
+BB 方法选取的 αk 是如下两个最优问题之一的解：
+$$\min\limits_{\alpha} ||\alpha y^{k-1} - s^{k-1}||^2$$
+$$\min\limits_{\alpha} || y^{k-1} - \alpha^{-1}s^{k-1}||^2$$
+其中：$s^{k−1} = x^k − x^{k−1}$，$y^{k-1} = \bigtriangledown f{k} - \bigtriangledown f^{k-1}$，容易验证，两个最优问题的解分别为：
+
+$$\alpha^k BB1 = \frac{(s^{k-1})^Ty^{k-1}} {(y^{k-1})^Ty^{k-1}}$$
+
+$$\alpha^k BB2 = \frac{(s^{k-1})^T s^{k-1}}{(s^{k-1})^Ty^{k-1}}$$
+
+得到两种迭代格式:
+$$x^{k+1} = x^k - \alpha^k BB1 \bigtriangledown f^{k}$$
+$$x^{k+1} = x^k - \alpha^k BB2 \bigtriangledown f^{k}$$
+
+对于一般的问题，计算出的步长可能过大或过小，因此我们还需要将步长做上界和下界的截断
+
 Barzilai-Borwein 方法的实现代码如下：
 ```cpp
 template <typename Function, typename X> class BarzilaiBorwein {

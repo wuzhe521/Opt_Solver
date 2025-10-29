@@ -14,5 +14,26 @@
 
 ![](./doc/pics/nonConvex_fig.png)
 
+The library is organized as follows:
+|---core
+|---|---algebra
+|---|---config
+|---|---constant
+|---|---function
+|---|---gradientsearch
+|---|---linearsearch
+|---|---matrix
+|---|---newton
+|---|---utilities
+|---|---vector
+|---doc
+|---|---pics
+|---|---tutorials.md
+|---test
+|---|---test_function.cc
+|---tool
+|---readme.md
+
+
 
 <font size="5" color = "blue">  There will be a time to ride the wind and waves, and set sail to cross the vast ocean. </font>
