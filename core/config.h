@@ -40,7 +40,7 @@
 // ==========================
 #endif
 
-#define LOG_LVL 1 // 0 Print Nothing
+#define LOG_LVL 2 // 0 Print Nothing
                   // 1 Print MSG
                   // 2 Pint Location and MSG
 

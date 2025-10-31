@@ -18,6 +18,7 @@ int main() {
   TestFunction f;
   X x0 = {10, 10};
   gons::qussinewton::QuasiNewtonMethod<TestFunction, X> qussi_newton(f, x0);
+  qussi_newton.Optimize();
   LOG(gons::utilites::GetVersion());
   LOG("QuasiNewtonMethod");
   return 0;

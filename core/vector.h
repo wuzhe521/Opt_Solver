@@ -12,7 +12,10 @@ template <typename T, GONS_UINT R, GONS_UINT C> class Matrix;
 template <typename T, GONS_UINT N> class Vector : public Matrix<T, 1, N> {
   using Matrix<T, 1, N>::Matrix;
 protected:
-  const bool row_based = true;
+  bool row_based = true;
+public:
+  bool getRowBased() const { return this->row_based; }
+  void setRowBased(bool row_based) { this->row_based = row_based; }
 public:
   Vector() = default;
   Vector(const Matrix<T, 1, N> &m) : Matrix<T, 1, N>(m) {}
@@ -118,10 +121,11 @@ public:
   }
 
   Vector<T,N> transpose() const {
-    Vector<T, N> result;
+    Vector<T,N> result;
     for (GONS_UINT i = 0; i < N; i++) {
       result(i) = this->data_[0][i];
     }
+    result.setRowBased(!result.getRowBased());
     return result;
   }
 

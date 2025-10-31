@@ -299,8 +299,9 @@ public:
 
 
   // matrix multiply vector
+  // need to be done 
   Vector<T, R> operator*(const Vector<T, C>&vec) const{
-    CHECK(C != vec.rows(), "matrix and vector size not match!");
+    CHECK(vec.isRowBased(), "Vector must be column based");
     Vector<T, R> result;
     for (GONS_UINT i = 0; i < R; i++) {
       for (GONS_UINT j = 0; j < C; j++) {
