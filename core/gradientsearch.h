@@ -8,6 +8,7 @@
 #include "vector.h"
 
 namespace gons {
+namespace gradientsearch {
 
 using namespace gons::utilites::LOG_MSG;
 
@@ -32,7 +33,7 @@ public:
     parameters_ = parameters;
   }
   void set_linear_search_params(
-      const typename ArmijoSearch<Function, X>::ArmijoParameters &parameters) {
+      const typename linearsearch::ArmijoSearch<Function, X>::ArmijoParameters &parameters) {
     linear_search_.set_params(parameters);
   }
   double SearchStep(const X &x, const Function &f) {
@@ -80,7 +81,7 @@ public:
 private:
   Function f_;
   X x_;
-  ArmijoSearch<Function, X> linear_search_;
+  linearsearch::ArmijoSearch<Function, X> linear_search_;
   gradient_descent_parameters parameters_;
 };
 
@@ -199,7 +200,7 @@ private:
   X lastX_;
   BarzilaiBorweinParameters parameters_;
 };
-
+} // namespace gradientsearch
 } // namespace gons
 
 #endif // GONS_GRADIENTSEARCH_H_

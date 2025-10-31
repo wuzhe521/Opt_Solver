@@ -11,7 +11,8 @@ template <typename T, GONS_UINT R, GONS_UINT C> class Matrix;
 
 template <typename T, GONS_UINT N> class Vector : public Matrix<T, 1, N> {
   using Matrix<T, 1, N>::Matrix;
-
+protected:
+  const bool row_based = true;
 public:
   Vector() = default;
   Vector(const Matrix<T, 1, N> &m) : Matrix<T, 1, N>(m) {}
@@ -34,6 +35,8 @@ public:
     }
   }
 
+  bool isRowBased() const { return row_based; }
+  bool isColumnBased() const { return !row_based; }
   Vector<T, N> &operator=(const Vector<T, N> &v) {
     for (GONS_UINT i = 0; i < N; i++) {
       this->data_[0][i] = v.data_[0][i];
@@ -110,6 +113,22 @@ public:
           result(i, j) += this->data_[0][k] * m(k, j);
         }
       }
+    }
+    return result;
+  }
+
+  Vector<T,N> transpose() const {
+    Vector<T, N> result;
+    for (GONS_UINT i = 0; i < N; i++) {
+      result(i) = this->data_[0][i];
+    }
+    return result;
+  }
+
+  T operator*(const Vector<T, N> &v) const {
+    T result = 0;
+    for (GONS_UINT i = 0; i < N; i++) {
+      result += this->data_[0][i] * v(i);
     }
     return result;
   }

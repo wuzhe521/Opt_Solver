@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 
   TestFunction f;
   X x = {10, 10};
-  gons::NewtonMethod<TestFunction, X> nm(f, x);
+  gons::newton::NewtonMethod<TestFunction, X> nm(f, x);
   nm.Optimize();
 
   return 0;

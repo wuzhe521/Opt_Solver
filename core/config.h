@@ -17,6 +17,8 @@
 #if (EMBEDDED_MODE == 0)
 
 // ==== Type Definitions ====
+#define GONS_BOOL bool
+
 #define GONS_INT int64_t
 
 #define GONS_UINT uint64_t

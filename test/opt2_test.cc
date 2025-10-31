@@ -18,10 +18,10 @@ int main(int argc, char *argv[]) {
 
   TestFunction f;
   X x = {10, 10};
-  gons::GradientDescentSearch<TestFunction, X> gd(f, x);
+  gons::gradientsearch::GradientDescentSearch<TestFunction, X> gd(f, x);
   gd.Optimize();
 
-  gons::BarzilaiBorwein<TestFunction, X> bb(f, x);
+  gons::gradientsearch::BarzilaiBorwein<TestFunction, X> bb(f, x);
   bb.Optimize();
 
   return 0;

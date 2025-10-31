@@ -9,6 +9,7 @@
 
 namespace gons {
 using namespace gons::utilites::LOG_MSG;
+namespace newton { 
 
 template <typename Function, typename X> class NewtonMethod {
 public:
@@ -63,7 +64,7 @@ private:
   X x_;
   NewtonParameters param_;
 };
-
+}
 } // namespace gons
 
 #endif // GONS_NEWTON_H

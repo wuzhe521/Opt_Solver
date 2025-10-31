@@ -163,7 +163,7 @@ public:
     return result;
   }
   // Identity Matrix
-  static Matrix<T, R, C> Identify() {
+  static Matrix<T, R, C> Identity() {
     CHECK(R != C, "Not Square!");
     Matrix<T, R, C> result;
     for (GONS_UINT i = 0; i < R; ++i) {

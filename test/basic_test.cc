@@ -56,11 +56,11 @@ int main() {
   gons::Matrix<float, 3, 2> MT = M.Transpose();
   MT.Print("M' : \n");
 
-  auto Identy = M4.eye();
-  Identy.Print("M4 eye() : \n");
+  auto Identity = M4.eye();
+  Identity.Print("M4 eye() : \n");
 
-  auto M5 = gons::Matrix<float, 4, 4>::Identify();
-  M5.Print("M5_I Identify() :");
+  auto M5 = gons::Matrix<float, 4, 4>::Identity();
+  M5.Print("M5_I Identity() :");
   LOG(" Normal ");
   LOG_WARNING(" Warnning ")
   LOG_ERROR(" ERROR ");

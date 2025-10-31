@@ -6,10 +6,10 @@
 #include "vector.h"
 
 namespace gons {
-
+namespace linearsearch {
 using namespace gons::utilites::LOG_MSG;
-
 template <typename Function, typename X> class ArmijoSearch {
+
 public:
   struct ArmijoParameters {
     double alpha = 1e-4;
@@ -359,5 +359,6 @@ private:
   //
   WolfeParameters params_;
 };
+} // namespace linearsearch
 } //   namespace gons
 #endif

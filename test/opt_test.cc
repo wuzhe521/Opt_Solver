@@ -20,20 +20,20 @@ int main() {
   TestFunction f;
   X x = {10, 10};
   // 使用Armijo搜索优化器
-  gons::ArmijoSearch<TestFunction, X> armijo_search(f, x);
+  gons::linearsearch::ArmijoSearch<TestFunction, X> armijo_search(f, x);
   armijo_search.Optimize();
   LOG("Final x: " << armijo_search.get_x());
   LOG("Final f(x): " << armijo_search.get_function_value());
   // 使用Goldstein搜索优化器
-  gons::GoldsteinSearch<TestFunction, X> goldstein_search(f, x);
-  gons::GoldsteinSearch<TestFunction, X>::GoldsteinParameters goldstein_params;
+  gons::linearsearch::GoldsteinSearch<TestFunction, X> goldstein_search(f, x);
+  gons::linearsearch::GoldsteinSearch<TestFunction, X>::GoldsteinParameters goldstein_params;
   goldstein_search.Optimize();
   LOG("Final x: " << goldstein_search.get_x());
   LOG("Final f(x): " << goldstein_search.get_function_value());
 
   // 使用Wolfe搜索优化器
-  gons::WolfeSearch<TestFunction, X> wolfe_search(f, x);
-  gons::WolfeSearch<TestFunction, X>::WolfeParameters wolfe_params;
+  gons::linearsearch::WolfeSearch<TestFunction, X> wolfe_search(f, x);
+  gons::linearsearch::WolfeSearch<TestFunction, X>::WolfeParameters wolfe_params;
   wolfe_search.Optimize();
   LOG("Final x: " << wolfe_search.get_x());
   LOG("Final f(x): " << wolfe_search.get_function_value());
