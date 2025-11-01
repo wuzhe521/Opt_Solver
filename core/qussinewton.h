@@ -12,68 +12,104 @@ namespace gons {
 namespace qussinewton {
 
 using namespace gons::utilites::LOG_MSG;
-template <typename Function, typename X> class QuasiNewtonMethod {
+template <typename Function, typename X> class SRMethod {
 
 public:
-  struct QuasiNewtonParameters {
+  enum class SRMethodStatus { Success, Failure, MaxIterationReached };
+  enum class SRMethodType { SR1, SR2 };
+  struct SRMethodParameters {
     double tolerance = 1.0e-6;
     GONS_UINT max_iterations = 1000;
-    bool verbose = true;
+    GONS_BOOL verbose = false;
+    SRMethodType MethodType = SRMethodType::SR1;
   };
-  enum class QuasiNewtonStatus { Success, Failure, MaxIterationReached };
-  QuasiNewtonMethod(Function &f, X &x) : m_f(f), m_x(x), m_wolfe_search(f, x) {}
-  ~QuasiNewtonMethod() = default;
 
-  void set_parameters(const QuasiNewtonParameters &params) { m_params = params; }
+  SRMethod(Function &f, X &x) : m_f(f), m_x(x) {}
+  ~SRMethod() = default;
+
+  void set_parameters(const SRMethodParameters &params) { m_params = params; }
+
+  X get_x() const { return m_x; }
+  double get_function_value() const { return m_f(m_x); }
   template <typename T, GONS_UINT Size>
-  Matrix<T, Size, Size> SROneUpdate(const Matrix<T, Size, Size> &H,
+  Matrix<T, Size, Size> SROneUpdate(const Matrix<T, Size, Size> &B,
                                     const Vector<T, Size> &s,
                                     const Vector<T, Size> &y) {
     Matrix<T, Size, Size> result;
     // Compute the outer product of s and y
-    Vector<T, Size> yk_min_BkSk = y - H * s.transpose();
+    Vector<T, Size> yk_min_BkSk = y - B * s.transpose();
     Vector<T, Size> yk_min_BkSk_T = yk_min_BkSk.transpose();
+    T denominator = yk_min_BkSk_T.dot(s);
+    // CHECK(FLT_EQUAL(denominator, 0.0), "Denominator is zero");
+    Matrix<T, Size, Size> nominator = yk_min_BkSk.outerProduct(yk_min_BkSk);
+
+    result = B + nominator * (1.0 / denominator);
+    // Update the Hessian approximation
+    return result;
+  }
+  template <typename T, GONS_UINT Size>
+  Matrix<T, Size, Size> SRTwoMethod(const Matrix<T, Size, Size> &H,
+                                    const Vector<T, Size> &s,
+                                    const Vector<T, Size> &y) {
+    Matrix<T, Size, Size> result;
+    // Compute the outer product of s and y
+    Vector<T, Size> sk_min_Bkyk = s - H * y.transpose();
+    Vector<T, Size> sk_min_Bkyk_T = sk_min_Bkyk.transpose();
+    T denominator = sk_min_Bkyk_T.dot(y);
+    // CHECK(FLT_EQUAL(denominator, 0.0), "Denominator is zero");
+    Matrix<T, Size, Size> nominator = sk_min_Bkyk.outerProduct(sk_min_Bkyk);
+
+    result = H + nominator * (1.0 / denominator);
     // Update the Hessian approximation
     return result;
   }
 
-  QuasiNewtonStatus Optimize() {
+  SRMethodStatus Optimize() {
 
     GONS_UINT iter = 0;
 
-    Matrix Bk = m_f.hessian(m_x).Identity(); // Initial Hessian approximation
-    Bk.Print("Initial Bk:");
+    Matrix QuassiH =
+        m_f.hessian(m_x).Identity(); // Initial Hessian approximation
+
     while (true) {
       // calc direnction
-      X pk = Bk * m_f.gradient(m_x).transpose(); LOG("pk: " << pk);
-      // line search
-      double alpha = m_wolfe_search.Search(m_f, m_x); LOG("alpha: " << alpha);
+
+      X pk = m_params.MethodType == SRMethodType::SR1
+                 ? -1 * QuassiH.Inverse() * m_f.gradient(m_x).transpose()
+                 : -1 * QuassiH * m_f.gradient(m_x).transpose();
+      // line search to find step length Todo: change to wolfe search
       // update x
-      X x_new = m_x - alpha * pk; LOG("x_new: " << x_new);
+      X x_new = m_x + pk;
       // update B
-      X sk = x_new - m_x; LOG("sk: " << sk);
-      X yk = m_f.gradient(x_new) - m_f.gradient(m_x); LOG("yk: " << yk);
-      Bk = SROneUpdate(Bk, sk, yk); LOG("Bk: " << Bk);
+      X sk = x_new - m_x;
+
+      X yk = m_f.gradient(x_new) - m_f.gradient(m_x);
+
+      QuassiH = m_params.MethodType == SRMethodType::SR1
+                    ? SROneUpdate(QuassiH, sk, yk)
+                    : SRTwoMethod(QuassiH, sk, yk);
 
       m_x = x_new;
       ++iter;
 
       if (m_f.gradient(m_x).Norm2() < m_params.tolerance) {
 
-        LOG("QuasiNewton: Optimization finished.");
-        LOG("QuasiNewton: Function value: " << m_f(m_x));
-        LOG("QuasiNewton: Iterations: " << iter);
+        LOG("SRMethod: Optimization using "
+            << (m_params.MethodType == SRMethodType::SR1 ? "SR1" : "SR2")
+            << " finished.");
+        LOG("SRMethod: After Iterations: " << iter);
+        LOG("SRMethod: Final X : " << m_x);
+        LOG("SRMethod: Function Function value: " << m_f(m_x) << '\n');
 
-        return QuasiNewtonStatus::Success;
+        return SRMethodStatus::Success;
       }
       if (iter++ >= m_params.max_iterations) {
-        LOG_ERROR("QuasiNewton: Maximum number of iterations reached.");
-        return QuasiNewtonStatus::MaxIterationReached;
+        LOG_ERROR("SRMethod: Maximum number of iterations reached.");
+
+        return SRMethodStatus::MaxIterationReached;
       }
       if (m_params.verbose) {
         LOG("Iteration: " << iter);
-        LOG("Function value: " << m_f(m_x));
-        LOG("Gradient norm: " << m_f.gradient(m_x).Norm2());
         LOG("x: " << m_x);
       }
     }
@@ -82,10 +118,9 @@ public:
 private:
   Function &m_f;
   X &m_x;
-  QuasiNewtonParameters m_params;
-  // Line search method
-  linearsearch::WolfeSearch<Function, X> m_wolfe_search;
-  //
+  SRMethodParameters m_params;
+  // Line search method Todo: implement different line search methods
+  // linearsearch::WolfeSearch<Function, X> m_wolfe_search;
 };
 } // namespace qussinewton
 } // namespace gons

@@ -2,7 +2,6 @@
 #include "../core/utilites.h"
 #include "../core/vector.h"
 
-
 #include <iostream>
 using namespace gons::utilites::LOG_MSG;
 int main() {
@@ -73,11 +72,23 @@ int main() {
   gons::Matrix<float, 2, 2> M9 = M8.Inverse();
   M9.Print("M8 Inverse() : \n");
 
-   // vector multiplication test
+  // vector multiplication test
   gons::Matrix<float, 2, 2> M10{{1, 2}, {3, 4}};
   gons::Vector<float, 2> v{5, 6};
   v.Print("v : \n");
   gons::Vector<float, 2> v2 = M10 * v;
   v2.Print("M10 * v : \n");
+  gons::Vector<float, 2> v3 = -1 * v2;
+  v3.Print("V3 * v : \n");
+
+  gons::Matrix<float, 2, 3> M11{{1, 2, 3}, {4, 5, 6}};
+  gons::Matrix<float, 2, 3> M12 = -1 * M11;
+  M12.Print("-1 * M12 : \n");
+
+  gons::Vector<float, 3> v4{1, 2, 3};
+  gons::Vector<float, 3> v5{2, 3, 4};
+  float dot_product = v4.dot(v5);
+  gons::Matrix<float, 3, 3> M13 = v4.outerProduct(v5);
+  M13.Print("v4.outerProduct(v5) : \n");
   return 0;
 }

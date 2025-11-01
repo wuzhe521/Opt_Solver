@@ -6,7 +6,7 @@
 
 
 // ==== Floating Point Precision ====
-#define GONS_FLT_EPSILON 1.0e-9f
+#define GONS_FLT_EPSILON 1.0e-20f
 
 // ==== Feature Toggles ====
 #define ENABLE_PRINT_MATRIX 1
@@ -40,7 +40,7 @@
 // ==========================
 #endif
 
-#define LOG_LVL 2 // 0 Print Nothing
+#define LOG_LVL 1 // 0 Print Nothing
                   // 1 Print MSG
                   // 2 Pint Location and MSG
 

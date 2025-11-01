@@ -38,7 +38,6 @@ Vector<T, R> SolveLinearSystem(Matrix<T, R, C> &A, Vector<T, R> &b) {
 // Cholesky Decomposition
 
 
-
 } // namespace gons
 
 #endif

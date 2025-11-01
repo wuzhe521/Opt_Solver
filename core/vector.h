@@ -129,10 +129,12 @@ public:
     return result;
   }
 
-  T operator*(const Vector<T, N> &v) const {
-    T result = 0;
+  Matrix<T, N, N> outerProduct(const Vector<T, N> &v) const {
+    Matrix<T, N, N> result;
     for (GONS_UINT i = 0; i < N; i++) {
-      result += this->data_[0][i] * v(i);
+      for (GONS_UINT j = 0; j < N; j++) {
+        result(i, j) = this->data_[0][i] * v(j);
+      }
     }
     return result;
   }
