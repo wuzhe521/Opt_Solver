@@ -113,4 +113,162 @@ $$
 H^{k+1} = H^k + \frac{(s^k - H^ky^k)(s^k - H^ky^k)^T}{(s^k - H^ky^k)^T y^k}  \tag{4}
 $$
 
-SR1 公式虽然结构简单，但是有一个重大缺陷：它不能保证矩阵在迭代过程中保持正定
+SR1 公式虽然结构简单，但是有一个重大缺陷：它不能保证矩阵在迭代过程中保持正定, 因此不能保证矩阵的逆矩阵存在．因此在实际中较少使用 SR1 公式。
+
+SR 方法的代码实现：
+```cpp
+template <typename Function, typename X> class SRMethod {
+
+public:
+  enum class SRMethodStatus { Success, Failure, MaxIterationReached };
+  enum class SRMethodType { SR1, SR2 };
+  struct SRMethodParameters {
+    double tolerance = 1.0e-6;
+    GONS_UINT max_iterations = 1000;
+    GONS_BOOL verbose = false;
+    SRMethodType MethodType = SRMethodType::SR1;
+  };
+
+  SRMethod(Function &f, X &x) : m_f(f), m_x(x) {}
+  ~SRMethod() = default;
+
+  void set_parameters(const SRMethodParameters &params) { m_params = params; }
+
+  X get_x() const { return m_x; }
+  double get_function_value() const { return m_f(m_x); }
+  template <typename T, GONS_UINT Size>
+  Matrix<T, Size, Size> SROneUpdate(const Matrix<T, Size, Size> &B,
+                                    const Vector<T, Size> &s,
+                                    const Vector<T, Size> &y) {
+    Matrix<T, Size, Size> result;
+    // Compute the outer product of s and y
+    Vector<T, Size> yk_min_BkSk = y - B * s.transpose();
+    Vector<T, Size> yk_min_BkSk_T = yk_min_BkSk.transpose();
+    T denominator = yk_min_BkSk_T.dot(s);
+    // CHECK(FLT_EQUAL(denominator, 0.0), "Denominator is zero");
+    Matrix<T, Size, Size> nominator = yk_min_BkSk.outerProduct(yk_min_BkSk);
+
+    result = B + nominator * (1.0 / denominator);
+    // Update the Hessian approximation
+    return result;
+  }
+  template <typename T, GONS_UINT Size>
+  Matrix<T, Size, Size> SRTwoMethod(const Matrix<T, Size, Size> &H,
+                                    const Vector<T, Size> &s,
+                                    const Vector<T, Size> &y) {
+    Matrix<T, Size, Size> result;
+    // Compute the outer product of s and y
+    Vector<T, Size> sk_min_Bkyk = s - H * y.transpose();
+    Vector<T, Size> sk_min_Bkyk_T = sk_min_Bkyk.transpose();
+    T denominator = sk_min_Bkyk_T.dot(y);
+    // CHECK(FLT_EQUAL(denominator, 0.0), "Denominator is zero");
+    Matrix<T, Size, Size> nominator = sk_min_Bkyk.outerProduct(sk_min_Bkyk);
+
+    result = H + nominator * (1.0 / denominator);
+    // Update the Hessian approximation
+    return result;
+  }
+
+  SRMethodStatus Optimize() {
+
+    GONS_UINT iter = 0;
+
+    Matrix QuassiH =
+        m_f.hessian(m_x).Identity(); // Initial Hessian approximation
+
+    while (true) {
+      // calc direnction
+
+      X pk = m_params.MethodType == SRMethodType::SR1
+                 ? -1 * QuassiH.Inverse() * m_f.gradient(m_x).transpose()
+                 : -1 * QuassiH * m_f.gradient(m_x).transpose();
+      // line search to find step length Todo: change to wolfe search
+      // update x
+      X x_new = m_x + pk;
+      // update B
+      X sk = x_new - m_x;
+
+      X yk = m_f.gradient(x_new) - m_f.gradient(m_x);
+
+      QuassiH = m_params.MethodType == SRMethodType::SR1
+                    ? SROneUpdate(QuassiH, sk, yk)
+                    : SRTwoMethod(QuassiH, sk, yk);
+
+      m_x = x_new;
+      ++iter;
+
+      if (m_f.gradient(m_x).Norm2() < m_params.tolerance) {
+
+        LOG("SRMethod: Optimization using "
+            << (m_params.MethodType == SRMethodType::SR1 ? "SR1" : "SR2")
+            << " finished.");
+        LOG("SRMethod: After Iterations: " << iter);
+        LOG("SRMethod: Final X : " << m_x);
+        LOG("SRMethod: Function Function value: " << m_f(m_x) << '\n');
+
+        return SRMethodStatus::Success;
+      }
+      if (iter++ >= m_params.max_iterations) {
+        LOG_ERROR("SRMethod: Maximum number of iterations reached.");
+
+        return SRMethodStatus::MaxIterationReached;
+      }
+      if (m_params.verbose) {
+        LOG("Iteration: " << iter);
+        LOG("x: " << m_x);
+      }
+    }
+  }
+
+private:
+  Function &m_f;
+  X &m_x;
+  SRMethodParameters m_params;
+  // Line search method Todo: implement different line search methods
+  // linearsearch::WolfeSearch<Function, X> m_wolfe_search;
+};
+```
+
+测试函数 using $f(x) = x^2 + (y -1)^2 $,  代码：
+```cpp
+class TestFunction {
+public:
+  inline double operator()(const X &x) const {
+    return x(0) * x(0) + (x(1) - 1) * (x(1) - 1);
+  }
+  inline X gradient(const X &x) { return {2 * x(0), 2 * (x(1) - 1)}; }
+  inline gons::Matrix<double, 2, 2> hessian(const X &x) {
+    return gons::Matrix<double, 2, 2>({{2, 0}, {0, 2}});
+  }
+};
+```
+主函数：
+```cpp
+TestFunction f;
+  X x0 = {-100.0, 100.0};
+  gons::qussinewton::SRMethod<TestFunction, X>::SRMethodParameters params;
+  params.MethodType = gons::qussinewton::SRMethod<TestFunction, X>::SRMethodType::SR1;
+  gons::qussinewton::SRMethod<TestFunction, X> sr_method(f, x0);
+  sr_method.set_parameters(params);
+  sr_method.Optimize();
+  // test SR2
+  X x1 = {-100.0, -100.0};
+  params.MethodType = gons::qussinewton::SRMethod<TestFunction, X>::SRMethodType::SR2;
+  gons::qussinewton::SRMethod<TestFunction, X> sr1_method(f, x1);
+  sr1_method.set_parameters(params);
+  sr1_method.Optimize();
+```
+输出结果：
+```bash
+SRMethod: Optimization using SR1 finished.
+SRMethod: After Iterations: 3
+SRMethod: Final X : 0 1 
+
+SRMethod: Function Function value: 0
+
+SRMethod: Optimization using SR2 finished.
+SRMethod: After Iterations: 3
+SRMethod: Final X : 0 1 
+
+SRMethod: Function Function value: 8.07794e-28
+```
