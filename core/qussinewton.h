@@ -31,6 +31,15 @@ public:
 
   X get_x() const { return m_x; }
   double get_function_value() const { return m_f(m_x); }
+
+private:
+template <typename T, GONS_SIZE Size>
+  Matrix<T, Size, Size> init_hessian_approximation(const Vector<T, Size> &x) {
+    UNUSED(x); // in case warning
+    return Identity<T, Size>();
+  }
+
+public:
   template <typename T, GONS_UINT Size>
   Matrix<T, Size, Size> SROneUpdate(const Matrix<T, Size, Size> &B,
                                     const Vector<T, Size> &s,
@@ -47,6 +56,8 @@ public:
     // Update the Hessian approximation
     return result;
   }
+
+public:
   template <typename T, GONS_UINT Size>
   Matrix<T, Size, Size> SRTwoMethod(const Matrix<T, Size, Size> &H,
                                     const Vector<T, Size> &s,
@@ -68,8 +79,8 @@ public:
 
     GONS_UINT iter = 0;
 
-    Matrix QuassiH =
-        m_f.hessian(m_x).Identity(); // Initial Hessian approximation
+    auto QuassiH =
+        init_hessian_approximation(m_x); // Initial Hessian approximation
 
     while (true) {
       // calc direnction
