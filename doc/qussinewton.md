@@ -310,4 +310,121 @@ $$
 H^{k+1} = (I - \rho^k y^k (s^k)^T) ^T H^k (I - \rho^k s^k (y^k)^T) + \rho^k s^k (s^k)^T
  \end{aligned}
  $$
-其中 $\rho^k = \frac{1}{(s^k)^Ty^k}$
+其中 $\rho^k = \frac{1}{(s^k)^Ty^k}$ 
+
+代码实现:
+```cpp
+template <typename Function, typename X> class BFGSMethod {
+
+public:
+  enum class ApproxType { Direct, Inverse };
+  enum class BFGSMethodStatus { Success, Failure, MaxIterationReached };
+  struct BFGSMethodParameters {
+    double tolerance = 1.0e-6;
+    GONS_UINT max_iterations = 5;
+    GONS_BOOL verbose = false;
+    ApproxType HessianApproxType = ApproxType::Inverse;
+  };
+
+public:
+  BFGSMethod(Function &f, X &x) : m_f(f), m_x(x) {}
+  ~BFGSMethod() = default;
+  void set_parameters(const BFGSMethodParameters &params) { m_params = params; }
+  X get_x() const { return m_x; }
+  double get_function_value() const { return m_f(m_x); }
+
+private:
+  template <typename T, GONS_UINT Size>
+  Matrix<T, Size, Size> init_hessian_approximation(const Vector<T, Size> &x) {
+    UNUSED(x); // in case warning
+    return Identity<T, Size>();
+  }
+
+public:
+  template <typename T, GONS_UINT Size>
+  Matrix<T, Size, Size> DirectUpdateApprox(const Matrix<T, Size, Size> &B,
+                                           const Vector<T, Size> &s,
+                                           const Vector<T, Size> &y) {
+
+    Matrix<T, Size, Size> ykykT = y.outerProduct(y.transpose());
+    double inv_skTyk = 1.0 / (s.transpose().dot(y));
+    Matrix<T, Size, Size> ykykT_skTyk = ykykT * inv_skTyk;
+    Vector<T, Size> Bksk = B * s.transpose();
+    Matrix<T, Size, Size> Bksk_BkskT = Bksk.outerProduct(Bksk.transpose());
+    double skTBksk = s.transpose().dot(Bksk);
+    Matrix<T, Size, Size> Bksk_BkskT_skTBksk = Bksk_BkskT * (1.0 / skTBksk);
+    Matrix<T, Size, Size> result = B + ykykT_skTyk - Bksk_BkskT_skTBksk;
+    return result;
+  }
+  template <typename T, GONS_UINT Size>
+  Matrix<T, Size, Size> InverseUpdateApprox(const Matrix<T, Size, Size> &H,
+                                            const Vector<T, Size> &s,
+                                            const Vector<T, Size> &y) {
+
+    Matrix<T, Size, Size> I = Identity<T, Size>();
+    double rhok = (1.0 / s.transpose().dot(y));
+    Matrix<T, Size, Size> ykskT = y.outerProduct(s.transpose());
+    Matrix<T, Size, Size> I_rhoykskT = I - rhok * ykskT;
+
+    Matrix<T, Size, Size> rhok_skskT = rhok * s.outerProduct(s.transpose());
+    Matrix<T, Size, Size> result =
+        I_rhoykskT.Transpose() * H * I_rhoykskT + rhok_skskT;
+    return result;
+  }
+
+  BFGSMethodStatus Optimize() {
+    GONS_UINT iter = 0;
+    auto ApproxHessian = init_hessian_approximation(m_x);
+    while (true) {
+      ApproxHessian.Print("ApproxHessian: \n");
+      X pk = m_params.HessianApproxType == ApproxType::Direct
+                 ? -1 * ApproxHessian.Inverse() * m_f.gradient(m_x).transpose()
+                 : -1 * ApproxHessian * m_f.gradient(m_x).transpose();
+      X x_new = m_x + pk;
+      LOG("pk: \n" << pk);
+      X sk = x_new - m_x;
+      X yk = m_f.gradient(x_new).transpose() - m_f.gradient(m_x).transpose();
+
+      ApproxHessian = m_params.HessianApproxType == ApproxType::Direct
+                          ? DirectUpdateApprox(ApproxHessian, sk, yk)
+                          : InverseUpdateApprox(ApproxHessian, sk, yk);
+      m_x = x_new;
+      ++iter;
+      if (m_params.tolerance) {
+        LOG("Iteration: " << iter << " x: " << m_x << " f(x): " << m_f(m_x));
+      }
+      if (iter > m_params.max_iterations) {
+        LOG_WARNING("Max iterations reached");
+        return BFGSMethodStatus::MaxIterationReached;
+      }
+      if (m_f.gradient(m_x).Norm2() < m_params.tolerance) {
+        LOG("BFGS, Converged");
+        LOG("After " << iter << " iterations");
+        LOG("x: " << m_x << " f(x): " << m_f(m_x));
+        return BFGSMethodStatus::Success;
+      }
+    }
+
+    return BFGSMethodStatus::Success;
+  }
+
+private:
+  Function &m_f;
+  X &m_x;
+  BFGSMethodParameters m_params;
+};
+```
+测试函数仍采用，SR-秩1更新的测试函数。 $ f(x, y) = x^2 + (y - 1)^2 $.
+测试代码如下：
+```c++
+  X x2 = {-100.0, -100.0};
+  gons::qussinewton::BFGSMethod<TestFunction, X> bfgs_method(f, x2);
+  bfgs_method.Optimize();
+```
+测试结果如下：
+```bash
+BFGS, Converged
+After 2 iterations
+x: -1.42109e-14 1 
+f(x): 1.00974e-27
+```
