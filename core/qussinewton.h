@@ -185,12 +185,10 @@ public:
     GONS_UINT iter = 0;
     auto ApproxHessian = init_hessian_approximation(m_x);
     while (true) {
-      ApproxHessian.Print("ApproxHessian: \n");
       X pk = m_params.HessianApproxType == ApproxType::Direct
                  ? -1 * ApproxHessian.Inverse() * m_f.gradient(m_x).transpose()
                  : -1 * ApproxHessian * m_f.gradient(m_x).transpose();
       X x_new = m_x + pk;
-      LOG("pk: \n" << pk);
       X sk = x_new - m_x;
       X yk = m_f.gradient(x_new).transpose() - m_f.gradient(m_x).transpose();
 
