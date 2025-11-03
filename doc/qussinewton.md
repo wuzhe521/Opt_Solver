@@ -1,6 +1,6 @@
 # Quasi-Newton Methods
 牛顿法在理论上和实践中均取得很好的效果．然而对于大规模问题，函数的海瑟矩阵计算代价特别大或者难以得到，即便得到海瑟矩阵我们还需要求解一个大规模线性方程组．那么能否使用海瑟矩阵或其逆矩阵的近似来进行牛顿迭代呢？拟牛顿法便是这样的算法，它能够在每一步以较小的计算代价生成近似矩阵，并且使用近似矩阵代替海瑟矩阵而产生的迭代序列仍具有超线性收敛的性质．  
-拟牛顿方法不计算海瑟矩阵 $\nabla^2 f(x)$，而是构造其近似矩阵 $B^k$ 或其逆的近似矩阵 $H^k$ ．我们希望 $B^k$或$H^k$仍然保留海瑟矩阵的部分性质，例如使得 $d^k 仍然为下降方向．
+拟牛顿方法不计算海瑟矩阵 $\nabla^2 f(x)$，而是构造其近似矩阵 $B^k$ 或其逆的近似矩阵 $H^k$ ．我们希望 $B^k$或$H^k$仍然保留海瑟矩阵的部分性质，例如使得 $d^k$ 仍然为下降方向．
 
 在牛顿法中已知，在第k 步迭代中， $x^k$ 处， 梯度函数 $\nabla f(x)$ 满足：
 $$f(x^k + d^k) \approx f(x^k) + \bigtriangledown f(x^k)(d^k)+ \frac{1}{2}(d^k)^T \bigtriangledown^2 f(x^k)(d^k)$$
@@ -272,3 +272,42 @@ SRMethod: Final X : 0 1
 
 SRMethod: Function Function value: 8.07794e-28
 ```
+
+## BFGS Method 
+
+SR1 公式虽然结构简单，但是有一个重大缺陷：它不能保证矩阵在迭代过程中保持正定．为了客服这个缺陷，我们可以使用 BFGS 方法，BFGS 方法的矩阵是正定的，并且可以保证矩阵在迭代过程中保持正定．
+BFGS 采用秩二更新的方法， Rank-2 update
+$$
+B^{k+1} = B^k + \alpha_k uu^T + \beta_k vv^T
+$$
+其中： $u^k$， $v^k$， $\alpha_k$， $\beta_k$ 是迭代过程中的待定系数。
+根据割线方程：
+$$
+\begin{aligned}
+B^{k+1} * s^k &= y^k \\
+[B^k + \alpha_k uu^T + \beta_k vv^T]s^k &= y^k \\
+B^k * s^k + \alpha_k uu^T * s^k + \beta_k vv^T * s^k &= y^k \\ 
+u^T * s^k\quad and \quad v^T * s^k \quad is  \quad constant:\\
+(\alpha_k u^T * s^k) * u + (\beta_k v^T * s^k) * v &= y^k - B^k * s^k 
+\end{aligned}
+$$
+$u^k$， $v^k$， $\alpha_k$， $\beta_k$ 的取法非常多，暂令：
+$$
+u = y^k, \qquad \alpha_k u^T * s^k = 1\\
+v = B^ks^k, \qquad \beta_k v^T * s^k = -1
+$$
+得到更新方程：
+$$
+\begin{aligned}
+ B^{k+1} &= B^k + \alpha_k uu^T + \beta_k  vv^T \\
+  &= B^k + \frac{y^k(y^k)^T}{(y^k)^Ts^k}  - \frac{B^ks^k(B^k*s^k)^T}{(B^ks^k)^Ts^k}
+ \end{aligned}
+$$
+如果采用一种形式的割线方程，我们则可得到 更简单的更新方程：
+
+$$
+\begin{aligned}
+H^{k+1} = (I - \rho^k y^k (s^k)^T) ^T H^k (I - \rho^k s^k (y^k)^T) + \rho^k s^k (s^k)^T
+ \end{aligned}
+ $$
+其中 $\rho^k = \frac{1}{(s^k)^Ty^k}$
