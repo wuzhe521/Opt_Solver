@@ -37,6 +37,15 @@ Vector<T, R> SolveLinearSystem(Matrix<T, R, C> &A, Vector<T, R> &b) {
 
 // Cholesky Decomposition
 
+// Identity matrix
+template <typename T, GONS_UINT N>
+Matrix<T, N, N> Identity() {
+  Matrix<T, N, N> I;
+  for (GONS_UINT i = 0; i < N; ++i) {
+    I(i, i) = 1;
+  }
+  return I;
+}
 
 } // namespace gons
 
