@@ -28,5 +28,10 @@ int main() {
   gons::qussinewton::SRMethod<TestFunction, X> sr1_method(f, x1);
   sr1_method.set_parameters(params);
   sr1_method.Optimize();
+
+
+  X x2 = {-100.0, -100.0};
+  gons::qussinewton::BFGSMethod<TestFunction, X> bfgs_method(f, x2);
+  bfgs_method.Optimize();
   return 0;
 }
