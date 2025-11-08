@@ -22,12 +22,16 @@ using namespace gons::gradientsearch;
 // DataType :  float or double
 // Var_Size :  number of variables
 // Con_Size :  number of constraints
+// description:
+//             f(x) = 0.5 * x' * P * x + q' * x
+//             s.t.
+//             l <= A * x <= u
 template <typename DataType, GONS_UINT Var_Size, GONS_UINT Con_Size>
 class QuadPenaltyFunction {
 public:
   struct quad_penalty_parmeters {
     DataType rho = 0.1;
-    DataType alpha = 2; // leaning rate
+    DataType alpha = 2; // penalty growth rate
     GONS_UINT max_iter = 1000;
     GONS_BOOL verbose = false;
     GONS_BOOL war_start = true;
@@ -95,6 +99,8 @@ public:
       Vector<DataType, Con_Size> Ax = A_ * x.transpose();
       for (size_t i = 0; i < Con_Size; i++) {
         DataType temp = l_(i) - Ax(i);
+        // □□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□
+        // TO BE DONE HERE ...
       }
     }
   };
