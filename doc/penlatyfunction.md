@@ -1,0 +1,173 @@
+# 罚函数法
+约束优化问题
+一般约束优化问题的数学表达
+$$
+min f(x)\\s.t.\\
+g_{l}(x)\le 0\\
+h_{i}(x)=0\\
+i=1\ 2\ 3\ 4...n\\
+l=1\ 2\ 3\ 4...m$$
+我们求解此类问题的一般思想是，将约束优化问题转化为无约束优化问题。
+罚函数法
+1. 等式约束问题
+$$min f(x)\\s.t.\\
+h_{i}(x)=0\\i=1\ 2\ 3\ 4...n$$
+构造惩罚项$$p(x)$$
+惩罚项要满足以下两点：
+  - 当x在可行域S中
+$$
+x \in S=>h_{i}(x) = 0\\p(x) = 0\\
+$$
+  - 当x不在可行域S中
+$$
+x \not\in S=>h_{i}(x) \neq 0\\p(x) > 0\\$$
+设计惩罚项
+$$p(x) = \sum_{i=1}^l{h_{i}^2(x)}$$
+根据原约束优化问题，构造新的罚函数 
+$$P(x,\sigma) = f(x) + \sigma p(x)\\
+\sigma > 0$$
+同时产生一个无约束优化问题：
+$$\min\limits_{x\in R^N} P(x,\sigma) = f(x) + \sigma p(x)
+\\
+\sigma > 0$$
+原问题的另一种表达，在可行域S内，求f(x)关于x的最小值：
+$$\min\limits_{x \in S} f(x)\\
+s:\{x|h_{i}(x) = 0\ \ \ i=1\ 2\ 3...l\}$$
+因为在可行域内，惩罚项为0，因此也就等价于
+$$\min\limits_{x \in S} f(x) + \sigma p(x)\\
+s:\{x|h_{i}(x) = 0\ \ \ i=1\ 2\ 3...l\}\\
+\sigma > 0$$
+又因为：
+$$\min\limits_{x \in S} f(x) + \sigma p(x)\geq  \min\limits_{x \in R^N} f(x) + \sigma p(x) = P(x, \sigma)\\
+\sigma > 0$$
+即产生的无约束优化问题，是原约束优化问题的一个下届
+显然，最小值的取值和 $$\sigma$$的取值有关
+记 $$\theta(\sigma) = \min\limits_{x\in R^N} f(x) + \sigma p(x) \ 
+\sigma > 0$$, $$\theta(\sigma) $$为原问题最优解的一个下届。在对偶分析中，已经了解，下届越大越好
+求$$\max\limits_{\sigma} \theta(\sigma) \ 
+\sigma > 0$$，因为 $$p(x) \geq 0$$ $$f(x) + \sigma p(x)$$是关于 $$\sigma$$单调递增的, min/max不影响单调性。
+$$\max\limits_{\sigma} \theta(\sigma) $$等价于 $$\lim_{\sigma \to \inf}\theta(\sigma)$$
+
+例子：
+$$min\ x_{1} + x_{2} \\
+x_{2} - x_{1}^2 = 0$$
+按照原来的方式，通过图形法或KKT点来求解，在此，运用罚函数法：
+解：
+构造罚函数：
+$$P(x, \sigma) = x_{1} + x_{2} + \sigma(x_{2} - x_{1}^2)^2$$
+原问题转化为求 $$\min\limits_{x}P(x, \sigma)$$，利用一阶条件- $$\frac{ \partial P }{ \partial x } = 0$$
+$$\frac{ \partial P }{\partial x_{1} } = 1 + 2\sigma(x_{2} - x_{1}^2)*(-2x_{1}) = 0\\
+\frac{ \partial P }{\partial x_{2} } =1 + 2\sigma(x_{2} - x_{1}^2) = 0$$
+解得：
+$$x_{1}(\sigma) = -\frac{1}{2}
+\\
+x_{2}(\sigma) =  \frac{1}{4} - \frac{1}{2\sigma}$$ $$Hessian = \begin{bmatrix} \frac{ \partial P }{ \partial x_{1} \partial x_{1}} & \frac{ \partial P }{ \partial x_{1} \partial x_{2}}\\ \frac{ \partial P }{ \partial x_{1} \partial x_{2}}&\frac{ \partial P }{ \partial x_{2} \partial x_{2}}\end{bmatrix} > 0=> minimal\ value$$
+令 $$\sigma \rightarrow  inf$$
+$$x^* = x(\sigma \rightarrow inf)= \begin{bmatrix} x_{1}\\ x_{2} \end{bmatrix} = \begin{bmatrix} -\frac{1}{2}\\ \frac{1}{4}\end{bmatrix}$$
+通用求解过程：
+1. 取初始点 $x_{0}$ 初始惩罚系数 $\sigma_{1} > 0$， 初始容差 $\varepsilon >0$， 初始迭代步 $k = 1$
+2. 以 $x_{k-1}$为起始点，求解
+  无约束优化问题 $\min f(x) + \sigma_{k} p(x)$
+  得到 $x_{k}$
+3. 判断 $\sigma_{k}p(x_{k}) < \varepsilon$，若成立，终止计算
+4. 更新 $\sigma_{k+1}$, 满足条件： $\sigma_{k+1} > \sigma_{k}$
+      - 线性递增 $\sigma_{k +1} = \beta\sigma_{k} \    \ \ \   \beta>1$
+  -  根据 $\min P(x, \sigma)$求解的难易程度，1. 容易 $\beta = 10$, 2 难 $\beta =2$
+5. 跳转至step 2
+
+性质1：
+假设 $$x_{k} $$是 $$\min f(x) + \sigma_{k} p(x)$$的全局最优解，在求解过程中，得到三个点列：
+1. $$P_{k}(x_{k} + \sigma_{k}p(x_{k}))$$ 
+    单调递增
+    $$P_{k}(x_{k} + \sigma_{k}p(x_{k})) = \min P(x, \sigma_{k}) = \theta(\sigma_{k})$$
+    因为 $\theta(\sigma)$单调递增，且 $$\sigma_{k+1} > \sigma_{k}$$,
+    所以， $$\theta(\sigma_{k}) = P_{k}(x_{k} + \sigma_{k}p(x_{k}))$$单调递增
+2. $$\{p(x_{k})\}$$单调递减
+       $$x_{k} $$是 $$\min f(x) + \sigma_{k} p(x)$$的全局最优解
+       $$x_{k+1} $$是 $$\min f(x) + \sigma_{k+1} p(x)$$的全局最优解
+得到：
+$$ f(x_{k}) + \sigma_{k} p(x_{k})\leq f(x_{k+1}) + \sigma_{k} p(x_{k+1})$$
+$$f(x_{k+1}) + \sigma_{k+1} p(x_{k+1})\leq f(x_{k}) + \sigma_{k+1} p(x_{k})$$
+化简一下：
+$$\sigma_{k} p(x_{k}) + \sigma_{k+1} p(x_{k+1}) \leq \sigma_{k} p(x_{k+1}) + \sigma_{k+1} p(x_{k})$$
+$$\sigma_{k} p(x_{k}) -\sigma_{k} p(x_{k+1})  \leq  \sigma_{k+1} p(x_{k}) - \sigma_{k+1} p(x_{k+1})$$
+$$\sigma_{k}[ p(x_{k}) - p(x_{k+1})]  \leq  \sigma_{k+1}[ p(x_{k}) - p(x_{k+1})]$$
+已知， $$\sigma_{k+1} > \sigma_{k}$$, 要使得等式成立：
+$$ p(x_{k}) - p(x_{k+1}) > 0$$
+即 $$\{p(x_{k})\}$$单调递减
+3. $$\{f(x_{k})\}$$单调递增
+根据2中的不等式 1：
+$$ f(x_{k}) + \sigma_{k} p(x_{k})\leq f(x_{k+1}) + \sigma_{k} p(x_{k+1})$$
+转化为
+$$ f(x_{k}) - f(x_{k+1}) \leq   \sigma_{k}[  p(x_{k+1}) - p(x_{k})]$$
+因为：
+  $$\{p(x_{k})\}$$单调递减， $$ \ \ \ \ p(x_{k+1}) - p(x_{k}) < 0$$
+  得到
+  $$ f(x_{k}) - f(x_{k+1}) \leq   \sigma_{k}[  p(x_{k+1}) - p(x_{k})] < 0$$
+  $$\{f(x_{k})\}$$单调递增
+
+性质2：
+假设 $$x_{k} $$是 $$\min f(x) + \sigma_{k} p(x)$$的全局最优解， $$\sigma_{k} \rightarrow inf$$ , $$\{x_{k}\}$$的任一聚点是 $$\min\limits_{x \in S} f(x) + \sigma p(x)$$的全局最优解
+可行且相等，证明：
+假设$$\min\limits_{x \in S} f(x) + \sigma p(x)$$的全局最优解为 $$x^*$$
+因为，$$x_{k} $$是 $$\min f(x_{k}) + \sigma_{k} p(x_{k})$$的全局最优解, 且$$x^*$$一定在可行域内 ，$$p(x^*) = 0$$ ：
+$$P_{k}(x_{k} ， \sigma_{k}) = f(x_{k}) + \sigma_{k}p(x_{k})\leq f(x^*) + \sigma p(x^*)  = f(x^*)$$
+$$f(x_{k}) \leq f(x_{k}) + \sigma_{k}p(x_{k})\leq f(x^*) + \sigma p(x^*)  = f(x^*)$$
+得：
+$$P_{k}(x_{k} ， \sigma_{k})\leq f(x^*)$$ 点列 $$P_{k}$$单调上升有上界
+$$f(x_{k}) \leq f(x^*)$$点列 $$f(x_k)$$单调上升有上界
+有 $$P_{k}(x_{k} ， \sigma_{k}) = f(x_{k}) + \sigma_{k}p(x_{k})$$
+$$p(x_{k}) = \frac{1}{\sigma_{k}}[P_{k}(x_{k} ， \sigma_{k})- f(x_{k})] $$ 
+当 $$\sigma_{k} \rightarrow inf$$ $$p(x_{k}) \rightarrow 0$$
+即点列 $$\{x_{k}\}$$ 的聚点 $$\bar{x}$$，满足 约束条件 ，是可行点。
+因为 上面推导 ：$$f(x_{k}) \leq f(x^*)$$点列 $$f(x_k)$$单调上升有上界
+$$f(\bar{x}) \leq f(x^*)$$
+$$\min\limits_{x \in S} f(x) + \sigma p(x)$$的全局最优解为 $$x^*$$
+$$f(x^*)  \leq f(\bar{x})$$
+得到：
+$$f(x^*)  =  f(\bar{x})$$
+
+性质3 设 $$x_{k}$$满足 $$\bigtriangledown_{x} P(x_{k}, \sigma_{k})=0$$，点列 $$\{ x_{k}\} $$的聚点 $$\bar{x}$$，假设$$\bar{x}$$处， $$\bigtriangledown_{x}h_{i}(x)$$线性无关，则$$\bar{x}$$是原约束优化问题的KKT点
+证明：
+$$\min\limits_{x\in R^N} P(x_{k},\sigma_{k}) = f(x) + \sigma_{k} p(x) = f(x) + \sigma_{k} \sum_{i=1}^l{h_{i}^2(x)}\\
+\bigtriangledown_{x} P(x_{k}, \sigma_{k}) = \bigtriangledown f(x_{k}) + 2\sigma_{k} \sum_{i=1}^l{h_{i}(x_{k})}\bigtriangledown h_{i}(x_{k})\\
+
+\sum_{i=1}^l{h_{i}(x_{k})}\bigtriangledown h_{i}(x_{k}) = -\frac{\bigtriangledown f(x_{k}) }{2\sigma_{k}}$$
+当 $$k \rightarrow \infty $$上式 右侧 趋向于 0 ， $$\sum_{i=1}^l{h_{i}(x_{k})}\bigtriangledown h_{i}(x_{k}) = 0$$ 得到 $$\sum_{i=1}^l{h_{i}(x_{k})}=0$$，即  $$\bar{x}$$是可行点
+记 $$\lambda^*_{i} = 2\sigma_{k}h_{i}(x_{k})$$，得到门面方程组：
+$$\bigtriangledown f(x_{k}) +\sum_{i=1}^l{\lambda^*_{i}\bigtriangledown h_{i}(x_{k}) }= 0$$
+又因为， $$\bigtriangledown_{x}h_{i}(x)$$线性无关， $$\lambda^*_{i}$$的解唯一
+当 $$k \rightarrow \infty $$上式，可以改写为 
+$$\bigtriangledown f(\bar{x}) +\sum_{i=1}^l{\lambda_{i}\bigtriangledown h_{i}(\bar{x}) }= 0$$ 且 $$\sum_{i=1}^l{h_{i}(\bar{x})}=0$$  
+KKT点
+
+2. 不等式约束 - 一般形势的约束优化问题
+$$min f(x)\\s.t.\\
+g_{l}(x)\le 0\\
+h_{i}(x)=0\\
+i=1\ 2\ 3\ 4...n\\
+l=1\ 2\ 3\ 4...m$$
+构造一般形式的惩罚函数：
+$$P(x) = f(x) + \sum_{i=1}^m{\max|0,g_{i}(x)|^\alpha} + \sum_{l=1}^n{|h_{l}(x)|^\beta}\ \ \ \ \ \alpha \ \beta\ge1$$
+罚函数的缺点
+罚函数法的思想是，通过不断地增加 $$\sigma_{k}$$，解$$\min f(x) + \sigma_{k} p(x)$$的全局最优解，使得点列 $$x_{k}$$逐步逼近最优解，从原理可知， $$\sigma_{k }\rightarrow \infty $$，点列的聚点 $$\bar{x}$$就是约束问题的全局最优解。
+随着$$\sigma_{k }\rightarrow \infty $$ 惩罚函数法越病态，这使得问题随着惩罚参数的增加而变得更加难以求解，从而导致数值误差和收敛速度缓慢，并且解通常不可行，需要进一步的步骤来修正。此外，惩罚权重的微调也很困难，并且该方法会增加搜索空间的粗糙度，可能导致算法寻求局部最小值而不是全局最优值。
+  - 随着惩罚参数的增加以更严格地执行约束，惩罚函数变得更加病态，这意味着它具有较大的梯度和突然的变化。
+  - 这种病态会导致数值误差，并导致用于解决惩罚问题的无约束优化方法收敛缓慢。
+  - 惩罚问题的解一般不是原约束问题的精确解，并且随着惩罚参数趋于无穷大，可能无法得到真正的解。
+  - 由于该方法对可行域的偏差进行惩罚，因此被惩罚问题的解往往略微不可行。
+  - 罚参数太低，会导致约束不充分，罚参数太大，会导致问题病态。
+  - 罚函数法是对原始问题的近似，会导致“解析误差”
+  - 罚函数法的解可能存在不可行域内，导致有些问题无解
+
+
+  # 二次函数 线性约束的罚函数法
+  目标函数是二次函数，约束是线性约束的数学形式:
+  $$ \min \frac{1}{2}x^TQx + c^Tx + d $$
+  线性不等式约束的数学形式:
+  $$ A_i x \leq b  \qquad i = 1,2,\dots,m $$
+  线性等式约束的数学形式:
+  $$ A_k x = b \qquad k = 1,2,\dots,n $$
+  线性约束的罚函数形式:
+  $$ \min \frac{1}{2}x^TQx + c^Tx + d + \sum_{i=1}^m \max(0, -A_i x + b) + \sum_{k=1}^n \max(0, A_k x - b) $$
+

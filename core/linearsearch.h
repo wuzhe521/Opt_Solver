@@ -293,7 +293,7 @@ public:
     return x_ - beta * f_.gradient(x_);
   }
 
-  double Search(Function& f,X& d,  X& x) {
+  double Search(Function &f, X &d, X &x) {
     const double min_beta = 1e-10;
     GONS_UINT iteration = 0;
     double beta = params_.beta;

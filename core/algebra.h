@@ -14,7 +14,7 @@ Vector<T, R> SolveLinearSystem(Matrix<T, R, C> &A, Vector<T, R> &b) {
   // For simplicity, we can use Gaussian elimination here
   // Note: This is a placeholder implementation and may not be efficient for
   // large systems
- 
+
   // Back substitution
   Vector<T, R> x;
   Matrix<T, R, C> A_inv = A.Inverse();
@@ -38,15 +38,28 @@ Vector<T, R> SolveLinearSystem(Matrix<T, R, C> &A, Vector<T, R> &b) {
 // Cholesky Decomposition
 
 // Identity matrix
-template <typename T, GONS_UINT N>
-Matrix<T, N, N> Identity() {
+template <typename T, GONS_UINT N> Matrix<T, N, N> Identity() {
   Matrix<T, N, N> I;
   for (GONS_UINT i = 0; i < N; ++i) {
-    I(i, i) = 1;
+    I(i, i) = T(1);
+  }
+  return I;
+}
+template <typename T, GONS_UINT N> Matrix<T, N, N> Zero() {
+  Matrix<T, N, N> I;
+  for (GONS_UINT i = 0; i < N; ++i) {
+    I(i, i) = T(0);
   }
   return I;
 }
 
+template <typename T, GONS_UINT N> Vector<T, N> Zero() {
+  Vector<T, N> I;
+  for (GONS_UINT i = 0; i < N; ++i) {
+    I(i) = T(0);
+  }
+  return I;
+}
 } // namespace gons
 
 #endif

@@ -141,7 +141,9 @@ public:
     }
     return alpha;
   }
-
+  X get_x() const{
+    return lastX_;
+  }
   // 优化方法
   BarzilaiBorweinStatus Optimize() {
     int iter = 0;

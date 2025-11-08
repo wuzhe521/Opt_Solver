@@ -56,7 +56,7 @@ public:
   T &operator()(GONS_UINT i) { return this->data_[0][i]; }
   const T &operator()(GONS_UINT i) const { return this->data_[0][i]; }
 
-  T dot(const Vector<T, N> &v) {
+  T dot(const Vector<T, N> &v) const {
     T result = 0;
     for (GONS_UINT i = 0; i < N; i++) {
       result += this->data_[0][i] * v(i);
@@ -135,6 +135,14 @@ public:
       for (GONS_UINT j = 0; j < N; j++) {
         result(i, j) = this->data_[0][i] * v(j);
       }
+    }
+    return result;
+  }
+
+  T Sum() const {
+    T result = 0;
+    for (GONS_UINT i = 0; i < N; i++) {
+      result += this->data_[0][i];
     }
     return result;
   }

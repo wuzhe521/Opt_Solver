@@ -33,7 +33,7 @@ public:
   double get_function_value() const { return m_f(m_x); }
 
 private:
-template <typename T, GONS_SIZE Size>
+  template <typename T, GONS_SIZE Size>
   Matrix<T, Size, Size> init_hessian_approximation(const Vector<T, Size> &x) {
     UNUSED(x); // in case warning
     return Identity<T, Size>();

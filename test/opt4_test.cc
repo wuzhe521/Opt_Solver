@@ -18,17 +18,18 @@ int main() {
   TestFunction f;
   X x0 = {-100.0, 100.0};
   gons::qussinewton::SRMethod<TestFunction, X>::SRMethodParameters params;
-  params.MethodType = gons::qussinewton::SRMethod<TestFunction, X>::SRMethodType::SR1;
+  params.MethodType =
+      gons::qussinewton::SRMethod<TestFunction, X>::SRMethodType::SR1;
   gons::qussinewton::SRMethod<TestFunction, X> sr_method(f, x0);
   sr_method.set_parameters(params);
   sr_method.Optimize();
   // test SR2
   X x1 = {-100.0, -100.0};
-  params.MethodType = gons::qussinewton::SRMethod<TestFunction, X>::SRMethodType::SR2;
+  params.MethodType =
+      gons::qussinewton::SRMethod<TestFunction, X>::SRMethodType::SR2;
   gons::qussinewton::SRMethod<TestFunction, X> sr1_method(f, x1);
   sr1_method.set_parameters(params);
   sr1_method.Optimize();
-
 
   X x2 = {-100.0, -100.0};
   gons::qussinewton::BFGSMethod<TestFunction, X> bfgs_method(f, x2);
