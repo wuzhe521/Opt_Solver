@@ -1,6 +1,7 @@
 #include "../core/matrix.h"
 #include "../core/utilites.h"
 #include "../core/vector.h"
+#include "../core/algebra.h"
 
 #include <iostream>
 using namespace gons::utilites::LOG_MSG;
@@ -90,5 +91,11 @@ int main() {
   float dot_product = v4.dot(v5);
   gons::Matrix<float, 3, 3> M13 = v4.outerProduct(v5);
   M13.Print("v4.outerProduct(v5) : \n");
+  gons::Matrix<double, 3, 3> Idet = gons::Matrix<double, 3, 3>::Identity();
+  gons::Vector<double, 3> v6{1, 2, 3};
+
+  gons::Vector<double, 3> v7 = v6 * Idet;
+
+  
   return 0;
 }
