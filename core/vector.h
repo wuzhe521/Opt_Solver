@@ -105,21 +105,6 @@ public:
   }
 
   // vector multiply matrix
-  template <typename Type, GONS_UINT R, GONS_UINT C>
-  Matrix<T, R, C> operator*(const Matrix<T, R, C> &m) const {
-    CHECK(C != N, "Matrix size mismatch");
-    Matrix<T, R, C> result;
-    for (GONS_UINT i = 0; i < R; i++) {
-      for (GONS_UINT j = 0; j < C; j++) {
-        result(i, j) = 0;
-        for (GONS_UINT k = 0; k < N; k++) {
-          result(i, j) += this->data_[0][k] * m(k, j);
-        }
-      }
-    }
-    return result;
-  }
-
   Vector<T,N> transpose() const {
     Vector<T,N> result;
     for (GONS_UINT i = 0; i < N; i++) {
@@ -138,7 +123,6 @@ public:
     }
     return result;
   }
-
   T Sum() const {
     T result = 0;
     for (GONS_UINT i = 0; i < N; i++) {
@@ -146,6 +130,8 @@ public:
     }
     return result;
   }
+
+ 
 };
 } // namespace gons
 #endif // GONS_CORE_VECTOR_H_
