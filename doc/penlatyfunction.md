@@ -45,8 +45,8 @@ $$\min\limits_{x \in S} f(x) + \sigma p(x)\geq  \min\limits_{x \in R^N} f(x) + \
 记 $$\theta(\sigma) = \min\limits_{x\in R^N} f(x) + \sigma p(x) \ 
 \sigma > 0$$, $$\theta(\sigma) $$为原问题最优解的一个下届。在对偶分析中，已经了解，下届越大越好
 求$$\max\limits_{\sigma} \theta(\sigma) \ 
-\sigma > 0$$，因为 $$p(x) \geq 0$$ $$f(x) + \sigma p(x)$$是关于 $$\sigma$$单调递增的, min/max不影响单调性。
-$$\max\limits_{\sigma} \theta(\sigma) $$等价于 $$\lim_{\sigma \to \inf}\theta(\sigma)$$
+\sigma > 0$$，因为 $$p(x) \geq 0$$ $$f(x) + \sigma p(x)$$是关于 $\sigma$单调递增的, min/max不影响单调性。
+$\max\limits_{\sigma} \theta(\sigma) $ 等价于 $$ \lim_\{\sigma \to \inf \} \theta (\sigma) $$
 
 例子：
 $$min\ x_{1} + x_{2} \\
@@ -61,7 +61,7 @@ $$\frac{ \partial P }{\partial x_{1} } = 1 + 2\sigma(x_{2} - x_{1}^2)*(-2x_{1}) 
 解得：
 $$x_{1}(\sigma) = -\frac{1}{2}
 \\
-x_{2}(\sigma) =  \frac{1}{4} - \frac{1}{2\sigma}$$ $$Hessian = \begin{bmatrix} \frac{ \partial P }{ \partial x_{1} \partial x_{1}} & \frac{ \partial P }{ \partial x_{1} \partial x_{2}}\\ \frac{ \partial P }{ \partial x_{1} \partial x_{2}}&\frac{ \partial P }{ \partial x_{2} \partial x_{2}}\end{bmatrix} > 0=> minimal\ value$$
+x_{2}(\sigma) =  \frac{1}{4} - \frac{1}{2\sigma}$$ $$Hessian = \begin{matrix} \frac{ \partial P }{ \partial x_{1} \partial x_{1}} & \frac{ \partial P }{ \partial x_{1} \partial x_{2}}\\ \frac{ \partial P }{ \partial x_{1} \partial x_{2}}&\frac{ \partial P }{ \partial x_{2} \partial x_{2}}\end{matrix} > 0=> minimal\ value$$
 令 $$\sigma \rightarrow  inf$$
 $$x^* = x(\sigma \rightarrow inf)= \begin{bmatrix} x_{1}\\ x_{2} \end{bmatrix} = \begin{bmatrix} -\frac{1}{2}\\ \frac{1}{4}\end{bmatrix}$$
 通用求解过程：
@@ -163,11 +163,23 @@ $$P(x) = f(x) + \sum_{i=1}^m{\max|0,g_{i}(x)|^\alpha} + \sum_{l=1}^n{|h_{l}(x)|^
 
   # 二次函数 线性约束的罚函数法
   目标函数是二次函数，约束是线性约束的数学形式:
-  $$ \min \frac{1}{2}x^TQx + c^Tx + d $$
+  $$ \min \frac{1}{2}x^TQx + c^Tx  $$
   线性不等式约束的数学形式:
-  $$ A_i x \leq b  \qquad i = 1,2,\dots,m $$
-  线性等式约束的数学形式:
-  $$ A_k x = b \qquad k = 1,2,\dots,n $$
+  $$ l \le A_i x \leq u  \qquad i = 1,2,\dots,m $$
+    
   线性约束的罚函数形式:
-  $$ \min \frac{1}{2}x^TQx + c^Tx + d + \sum_{i=1}^m \max(0, -A_i x + b) + \sum_{k=1}^n \max(0, A_k x - b) $$
+  $$ \frac{1}{2}x^TQx + c^Tx + \frac{\rho}{2} (\sum_{i=1}^m [\max (0, -A_i x + l)]^2 + \sum_{k=1}^n [\max(0, A_k x - u)]^2) $$
+  
+  分情况讨论：  
+  | 罚函数值   | $-A_i x + l \le 0 $| $-A_i x + l$ > 0 |
+  | --- | --- | --- |
+  |$A_k x - u \le 0$ |$ \frac{1}{2}x^TQx + c^Tx $ |$\frac{1}{2}x^TQx + c^Tx + \frac{\rho}{2} (\sum_{i=1}^m  (-A_i x + l)^2$|
+  |$A_k x - u > 0$ |$\frac{1}{2}x^TQx + c^Tx + \frac{\rho}{2}\sum_{k=1}^n (A_k x - u)^2)$ |Not Exist|
 
+
+| 罚函数值梯度   | $-A_i x + l \le 0 $| $-A_i x + l$ > 0 |
+  | --- | --- | --- |
+  |$A_k x - u \le 0$ |$ Qx + c^T $ |$\frac{1}{2}Qx + c^T + \rho (\sum_{i=1}^m  (-A_i x + l)$|
+  |$A_k x - u > 0$ |$Qx + c^T + \rho \sum_{k=1}^n (A_k x - u)$ |Not  Exist|
+
+  
