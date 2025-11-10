@@ -310,6 +310,17 @@ public:
     }
     return result;
   }
+
+  friend Vector<T, C> operator*(const Vector<T, R>&vec, const Matrix<T, R, C>&mat)
+  {
+    Vector<T, C> result;
+    for (GONS_UINT i = 0; i < C; i++){
+      for (GONS_UINT j = 0; j < R; j++){
+        result(i) += vec(j) * mat(j, i);
+      }
+    }
+    return result;
+  }
 }; // class Matrix End
 
 } // namespace gons
