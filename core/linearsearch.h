@@ -45,7 +45,8 @@ public:
       // Cache gradient to avoid repeated computation
       X gradient = f_.gradient(x_);
       double f_x = f_(x_);
-      double f_x_new = f_(x_ - beta * gradient);
+      X x_new = x_ - beta * gradient;
+      double f_x_new = f_(x_new);
       if (f_x_new < f_x - params_.alpha * beta * gradient.Norm2()) {
         // Armijo condition is satisfied
         params_.beta = beta;
