@@ -1,4 +1,4 @@
-# Opt_Solver
+# OptSolver
 
 
 
