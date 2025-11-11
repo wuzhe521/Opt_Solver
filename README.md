@@ -36,6 +36,6 @@ The library is organized as follows:
 |---tool
 |---readme.md
 ```
-This work is still developing, im trying my best on it. if u have some problem or suggestion plz contact me [email](mailto:wuzhe0902@163.com)
+This work is still developing, im trying my best on it. if u have some problem or suggestion plz [contact me](mailto:wuzhe0902@163.com)
 
 <font size="5" color = "blue">  There will be a time to ride the wind and waves, and set sail to cross the vast ocean. </font>
