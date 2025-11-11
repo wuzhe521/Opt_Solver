@@ -321,6 +321,21 @@ public:
     }
     return result;
   }
+
+  Vector<T, C> get_Row(GONS_UINT i){
+    CHECK(i >= R, "Index out of range");
+    Vector<T, C> result;
+    for (GONS_UINT j = 0; j < C; j++){
+      result(j) = (*this)(i, j);
+    }
+  }
+  Vector<T, R> get_Col(GONS_UINT i){
+    CHECK(i >= C, "Index out of range");
+    Vector<T, R> result;
+    for (GONS_UINT j = 0; j < R; j++){
+      result(j) = (*this)(j, i);
+    }
+  }
 }; // class Matrix End
 
 } // namespace gons
