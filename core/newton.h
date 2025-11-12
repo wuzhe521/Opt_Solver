@@ -27,7 +27,7 @@ public:
   X Search(const X &x, const Function &f) {
     X gradient = f.gradient(x);
    
-    gons::Matrix hessian = f.hessian(x);
+    auto hessian = f.hessian(x);
     
     // gons::Matrix hessian_inv = hessian.Inverse();
     X neg_gradient = gradient * -1;
