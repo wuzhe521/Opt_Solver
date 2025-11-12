@@ -21,6 +21,7 @@ template <typename Function, typename X> class GradientDescentSearch {
     GONS_UINT max_iterations = 1000;
     bool verbose = false;
   };
+public:
   enum class gradient_descent_state { SUCCESS, FAILURE, MAX_ITERATION_REACHED };
 
 public:
@@ -108,6 +109,7 @@ template <typename Function, typename X> class BarzilaiBorwein {
     bool verbose = false;
     SearchMethod method = SearchMethod::BB2;
   };
+public:
   enum class BarzilaiBorweinStatus { SUCCESS, FAILURE, MAX_ITERATION_REACHED };
 
 public:
@@ -115,7 +117,7 @@ public:
       : f_(f), lastGradient_(x), lastX_(x) {
     lastGradient_ = f_.gradient(lastX_);
   }
-  double SearchStep(const X &x_new, const X &grad_new, const Function &f) {
+  double SearchStep(const X &x_new, const X &grad_new) {
 
     X s_k1 = x_new - lastX_;
     X y_k1 = grad_new - lastGradient_;
@@ -155,7 +157,7 @@ public:
       X gradient_new = f_.gradient(x_new);
 
       // 更新x
-      double step = SearchStep(x_new, gradient_new, f_);
+      double step = SearchStep(x_new, gradient_new);
 
       // 限制步长在合理范围内
       parameters_.alpha =
@@ -194,6 +196,7 @@ public:
       LOG_WARNING("f(x) = " << f_(lastX_));
       return BarzilaiBorweinStatus::MAX_ITERATION_REACHED;
     }
+    return BarzilaiBorweinStatus::FAILURE;
   }
 
 private:
