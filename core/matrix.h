@@ -11,8 +11,7 @@
 namespace gons {
 using namespace utilites::LOG_MSG;
 
-template<typename T, GONS_UINT R>
-class Vector;
+template <typename T, GONS_UINT R> class Vector;
 
 template <typename T, GONS_UINT R, GONS_UINT C> class Matrix {
 protected:
@@ -297,10 +296,9 @@ public:
   }
 #endif
 
-
   // matrix multiply vector
-  // need to be done 
-  Vector<T, R> operator*(const Vector<T, C>&vec) const{
+  // need to be done
+  Vector<T, R> operator*(const Vector<T, C> &vec) const {
     CHECK(vec.isRowBased(), "Vector must be column based");
     Vector<T, R> result;
     for (GONS_UINT i = 0; i < R; i++) {
@@ -311,31 +309,34 @@ public:
     return result;
   }
 
-  friend Vector<T, C> operator*(const Vector<T, R>&vec, const Matrix<T, R, C>&mat)
-  {
+  friend Vector<T, C> operator*(const Vector<T, R> &vec,
+                                const Matrix<T, R, C> &mat) {
     Vector<T, C> result;
-    for (GONS_UINT i = 0; i < C; i++){
-      for (GONS_UINT j = 0; j < R; j++){
+    for (GONS_UINT i = 0; i < C; i++) {
+      for (GONS_UINT j = 0; j < R; j++) {
         result(i) += vec(j) * mat(j, i);
       }
     }
     return result;
   }
 
-  Vector<T, C> get_Row(GONS_UINT i){
+  Vector<T, C> get_Row(GONS_UINT i) {
     CHECK(i >= R, "Index out of range");
     Vector<T, C> result;
-    for (GONS_UINT j = 0; j < C; j++){
+    for (GONS_UINT j = 0; j < C; j++) {
       result(j) = (*this)(i, j);
     }
+    return result;
   }
-  Vector<T, R> get_Col(GONS_UINT i){
+  Vector<T, R> get_Col(GONS_UINT i) {
     CHECK(i >= C, "Index out of range");
     Vector<T, R> result;
-    for (GONS_UINT j = 0; j < R; j++){
+    for (GONS_UINT j = 0; j < R; j++) {
       result(j) = (*this)(j, i);
     }
+    return result;
   }
+
 }; // class Matrix End
 
 } // namespace gons
