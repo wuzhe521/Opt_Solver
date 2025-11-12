@@ -22,6 +22,7 @@ public:
     bool print_info = false;
   };
 
+public:
   enum class ArmijoStatus { Success, Failure };
 
 public:
@@ -140,6 +141,8 @@ public:
     GONS_UINT max_iter = 1000u;
     bool print_info = false;
   };
+
+public:
   enum class GoldsteinStatus { Success, Failure };
 
 public:
@@ -251,6 +254,8 @@ public:
     GONS_UINT max_iter = 1000u;
     bool print_info = false;
   };
+
+public:
   enum class WolfeStatus { Success, Failure };
 
 public:
