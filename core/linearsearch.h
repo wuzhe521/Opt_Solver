@@ -278,10 +278,12 @@ public:
       X gradient = f_.gradient(x_);
       double f_x = f_(x_);
       // Wolfe conditions
-      double f_x_new = f_(x_ - beta * gradient);
+      auto x_new = x_ - beta * gradient;
+      double f_x_new = f_(x_new);
       if (f_x_new <= f_x - params_.alpha_1 * beta * gradient.Norm2()) {
         // Armijo condition satisfied
-        X gradient_new = f_.gradient(x_ - beta * gradient);
+
+        X gradient_new = f_.gradient(x_new);
         if (-gradient_new.Norm2() > -params_.alpha_2 * gradient.Norm2()) {
           // Wolfe condition satisfied
           params_.beta = beta;
@@ -335,26 +337,26 @@ public:
   }
   WolfeStatus Optimize() {
     LOG(SOLVER_HEADER);
-    GONS_UINT i = 0;
+    GONS_UINT iter = 0;
     while (true) {
-      ++i;
       if (params_.enable_max_iter)
-        if (i >= params_.max_iter)
+        if (iter >= params_.max_iter)
           break;
       X x_new = WolfeRule();
       if (params_.print_info) {
-        LOG("Iteration: " << i);
+        LOG("Iteration: " << iter);
         LOG_WARNING("Function value last: " << f_(x_));
         LOG_WARNING("Function value new: " << f_(x_new));
         LOG_WARNING("Gradient Norm2: " << f_.gradient(x_).Norm2());
         LOG_ERROR("x: " << x_);
       }
       if (std::abs(f_(x_new) - f_(x_)) < params_.epsilon) {
-        LOG_ERROR("After " << i << " iterations, ");
+        LOG_ERROR("After " << iter << " iterations, ");
         LOG_ERROR("Wolfe search converged to a local minimum");
         return WolfeStatus::Success;
       }
       x_ = x_new;
+      ++iter;
     }
     return WolfeStatus::Failure;
   }
