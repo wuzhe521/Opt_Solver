@@ -21,6 +21,7 @@ template <typename Function, typename X> class GradientDescentSearch {
     GONS_UINT max_iterations = 1000;
     bool verbose = false;
   };
+
 public:
   enum class gradient_descent_state { SUCCESS, FAILURE, MAX_ITERATION_REACHED };
 
@@ -34,7 +35,8 @@ public:
     parameters_ = parameters;
   }
   void set_linear_search_params(
-      const typename linearsearch::ArmijoSearch<Function, X>::ArmijoParameters &parameters) {
+      const typename linearsearch::ArmijoSearch<Function, X>::ArmijoParameters
+          &parameters) {
     linear_search_.set_params(parameters);
   }
   double SearchStep(const X &x, const Function &f) {
@@ -104,11 +106,12 @@ template <typename Function, typename X> class BarzilaiBorwein {
     double alpha = 0.01;
     // gradient descent parameters
     double tolerance = 1.0e-6;
-    int max_iterations = 10;
+    int max_iterations = 1000;
 
     bool verbose = false;
-    SearchMethod method = SearchMethod::BB2;
+    SearchMethod method = SearchMethod::BB1;
   };
+
 public:
   enum class BarzilaiBorweinStatus { SUCCESS, FAILURE, MAX_ITERATION_REACHED };
 
@@ -143,9 +146,7 @@ public:
     }
     return alpha;
   }
-  X get_x() const{
-    return lastX_;
-  }
+  X get_x() const { return lastX_; }
   // 优化方法
   BarzilaiBorweinStatus Optimize() {
     int iter = 0;
@@ -160,11 +161,9 @@ public:
       double step = SearchStep(x_new, gradient_new);
 
       // 限制步长在合理范围内
-      parameters_.alpha =
-          step > parameters_.alpha_upper ? parameters_.alpha_upper : step;
-      parameters_.alpha =
-          step < parameters_.alpha_lower ? parameters_.alpha_lower : step;
-
+      step = std::max(parameters_.alpha_lower,
+                      std::min(parameters_.alpha_upper, step));
+      parameters_.alpha = step;
       // 更新x 和梯度
       lastX_ = x_new;
       lastGradient_ = gradient_new;
