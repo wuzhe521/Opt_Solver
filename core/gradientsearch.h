@@ -7,6 +7,9 @@
 #include "utilites.h"
 #include "vector.h"
 
+
+#include <queue>
+#include <deque>
 namespace gons {
 namespace gradientsearch {
 
@@ -97,17 +100,17 @@ template <typename Function, typename X> class BarzilaiBorwein {
   enum class SearchMethod { BB1, BB2 };
   struct BarzilaiBorweinParameters {
     // linear search rule parameters
-    double c = 0.1;
+    double c = 0.5;
     double beta = 0.333;
     // limit step size in a reasonable range
-    double alpha_upper = 1e10;
-    double alpha_lower = 1e-10;
+    double alpha_upper = 1e20;
+    double alpha_lower = 1e-20;
     // initial step size
     double alpha = 0.01;
     // gradient descent parameters
     double tolerance = 1.0e-6;
-    int max_iterations = 1000;
-
+    int max_iterations = 100;
+    const GONS_UINT M = 5;
     bool verbose = false;
     SearchMethod method = SearchMethod::BB1;
   };
@@ -118,7 +121,24 @@ public:
 public:
   BarzilaiBorwein(const Function &f, const X &x)
       : f_(f), lastGradient_(x), lastX_(x) {
+    // initialize queue of previous function values
     lastGradient_ = f_.gradient(lastX_);
+    for (int i = 0; i < parameters_.M; ++i) {
+      f_values_.push_back(f_(lastX_));
+    }
+  }
+  double non_monotone_Rule(double alpha, const X &x_new, const X &grad_new){
+    auto max_value = *std::max_element(f_values_.begin(), f_values_.end());
+    double alpha_non_mono = alpha;
+    while (alpha_non_mono > 1e-18){ // in order to avoid numerical issues
+      auto x_next = x_new - alpha_non_mono * grad_new;
+      if (f_(x_next) < max_value - parameters_.c * alpha_non_mono * grad_new.Norm2()){
+        break;
+      }
+      alpha_non_mono *= parameters_.beta;
+    }
+    
+    return alpha_non_mono; 
   }
   double SearchStep(const X &x_new, const X &grad_new) {
 
@@ -158,16 +178,19 @@ public:
       X gradient_new = f_.gradient(x_new);
 
       // 更新x
-      double step = SearchStep(x_new, gradient_new);
-
+      double step = SearchStep(x_new, gradient_new); 
+      // 非单调性规则
+      step = non_monotone_Rule(step, x_new, gradient_new); 
       // 限制步长在合理范围内
       step = std::max(parameters_.alpha_lower,
-                      std::min(parameters_.alpha_upper, step));
+                      std::min(parameters_.alpha_upper, step)); 
       parameters_.alpha = step;
       // 更新x 和梯度
       lastX_ = x_new;
       lastGradient_ = gradient_new;
-
+      // pop old function value and insert new function value
+      f_values_.pop_front();
+      f_values_.push_back(f_(lastX_));
       iter++;
       if (parameters_.verbose) // 打印信息
       {
@@ -203,6 +226,9 @@ private:
   X lastGradient_;
   X lastX_;
   BarzilaiBorweinParameters parameters_;
+
+  // array of previous function values
+  std::deque<double> f_values_;
 };
 } // namespace gradientsearch
 } // namespace gons
