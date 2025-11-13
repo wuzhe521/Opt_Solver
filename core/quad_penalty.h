@@ -270,6 +270,7 @@ public:
         LOG("满足结束条件")
         LOG("迭代次数为：" << iter)
         LOG("当前解为：" << x_.transpose())
+        break;
       }
       ++iter;
       x_ = x_new;
