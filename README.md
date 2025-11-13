@@ -10,7 +10,7 @@
 [![Github All Releases](https://img.shields.io/github/downloads/yixuan/Opt_Solver/total.svg)](https://github.com/yixuan/Opt_Solver/releases)
 [![Github Releases](https://img.shields.io/github/release/yixuan/Opt_Solver.svg)](https://github.com/yixuan/Opt_Solver/releases)
 
-[Opt_Solver](https://github.com/wuzhe521/Opt_Solver) is a lightweight header-only C++ library for numerical optimization. It provides a set of numerical optimization algorithms, including line search, gradient descent, Newton's method, BFGS, Quadratic Penalty and more. It is designed to be easy to use and efficient.
+[OptSolver](https://github.com/wuzhe521/Opt_Solver) is a lightweight header-only C++ library for numerical optimization. It provides a set of numerical optimization algorithms, including line search, gradient descent, Newton's method, BFGS, Quadratic Penalty and more. It is designed to be easy to use and efficient.
 
 ![](./doc/pics/nonConvex_fig.png)
 
