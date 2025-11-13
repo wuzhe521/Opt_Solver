@@ -15,8 +15,9 @@ int main() {
   Matrix<double, 1, 2> A = {{1.0, 1.0}};
   Vector<double, 1> b = {1.0};
   // construct corresponding solver
-  penalty_function::QuadPenaltyFunction_ECQP<double, 2, 1> PenaltyFunc(P, q, A,
-  // run optimization                                                                     b);
+  penalty_function::QuadPenaltyFunction_ECQP<double, 2, 1> PenaltyFunc(P, q, A, b);
+  
+    // run optimization                                                                     
   PenaltyFunc.Optimize();
   X rlt = PenaltyFunc.get_result(); // get result
   std::cout << "result: " << rlt << std::endl;
@@ -33,7 +34,7 @@ int main() {
   penalty_function::QuadPenaltyFunction_IECQP<double, 2, 3> PenaltyFunc2(P2, q2, A2, l2, u2);
   // run optimization
   PenaltyFunc2.Optimize();
-  // Before internal unconstrained solver oscillates best approch solution
+  // Before internal unconstrained solver oscillates best approx solution
   // is: 0.299622 0.700024
   // while osqp gives : 0.29877108 0.701228
   // This is the best i can do....
