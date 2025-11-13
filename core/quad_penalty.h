@@ -225,11 +225,11 @@ class QuadPenaltyFunction_IECQP {
 public:
   struct quad_penalty_parmeters {
     DataType rho = 1;
-    DataType alpha = 1.1; // penalty growth rate
-    GONS_UINT max_iter = 100;
+    DataType alpha = 2.0; // penalty growth rate
+    GONS_UINT max_iter = 1000;
     GONS_BOOL verbose = false;
     GONS_BOOL war_start = true;
-    DataType tol = 1e-5;
+    DataType tol = 1e-3;
   };
   enum class PenaltyOptStatus {
     Failure,
@@ -248,7 +248,7 @@ public:
   PenaltyOptStatus Optimize() {
     GONS_UINT iter = 0;
     do {
-      /*
+
       gradientsearch::BarzilaiBorwein<F, X> BB(f_, x_);
       auto status = BB.Optimize();
       if (status ==
@@ -262,11 +262,8 @@ public:
         LOG_ERROR("Internal gradient method Max Iteration Reached")
         return PenaltyOptStatus::InternalUnConSoverMaxStep;
       }
-      Vector<DataType, Var_Size> x_new = BB.get_x();*/
+      Vector<DataType, Var_Size> x_new = BB.get_x();
 
-      qussinewton::BFGSMethod<F, X> BFGS(f_, x_);
-      BFGS.Optimize();
-      auto x_new = BFGS.get_x();
       // 满足结束条件
       if (f_.grad_penaltyFunction(x_new).Norm2() < parameters_.tol) {
         x_ = x_new;
@@ -281,9 +278,10 @@ public:
       parameters_.rho *= parameters_.alpha;
       f_.update_rho(parameters_.rho);
     } while (iter < parameters_.max_iter);
-
-    LOG_ERROR("迭代次数超过最大限制")
-    return PenaltyOptStatus::MaxIterationReached;
+    if (iter >= parameters_.max_iter) {
+      LOG_ERROR("迭代次数超过最大限制")
+      return PenaltyOptStatus::MaxIterationReached;
+    }
   }
 
 private:
