@@ -168,8 +168,8 @@ public:
           beta > max_beta) {
         break;
       }
-
-      double f_x_new = f_(x_ - beta * gradient);
+      auto x_new  = x_ - beta * gradient;
+      double f_x_new = f_(x_new);
       if (f_x_new < f_x - beta * params_.alpha * gradient_norm &&
           f_x_new > f_x - (1 - params_.alpha) * beta * gradient_norm) {
         params_.beta = beta;
@@ -207,7 +207,6 @@ public:
     return beta;
   }
   GoldsteinStatus Optimize() {
-    LOG(SOLVER_HEADER);
     GONS_UINT i = 0;
     while (true) {
       ++i;
