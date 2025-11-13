@@ -202,10 +202,8 @@ public:
 
       // 检查梯度是否足够小
       if (lastGradient_.Norm2() < parameters_.tolerance) {
-        LOG_WARNING("After " << iter << " iterations");
-        LOG_WARNING("Barzilai-Borwein converged.");
-        LOG_WARNING("x = " << lastX_);
-        LOG_WARNING("f(x) = " << f_(lastX_));
+        LOG_WARNING("After " << iter << " iterations" << "Barzilai-Borwein converged.");
+        LOG_WARNING("x = " << lastX_ << "BB step size = " << step);
         return BarzilaiBorweinStatus::SUCCESS;
       }
     }
@@ -214,8 +212,6 @@ public:
     if (iter == parameters_.max_iterations) {
       LOG_WARNING("After " << iter << " iterations");
       LOG_WARNING("Barzilai-Borwein did not converge.");
-      LOG_WARNING("x = " << lastX_);
-      LOG_WARNING("f(x) = " << f_(lastX_));
       return BarzilaiBorweinStatus::MAX_ITERATION_REACHED;
     }
     return BarzilaiBorweinStatus::FAILURE;
