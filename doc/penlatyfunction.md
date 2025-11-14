@@ -329,8 +329,207 @@ result: 0.249999 0.749996
 
 
 # 不等式约束的二次罚函数法
+目标函数是二次函数，约束是线性约束的数学形式:
+$$ \min \frac{1}{2}x^TQx + c^Tx  $$
+线性不等式约束的数学形式:
+$$ l \le Ax \le u \qquad i = 1,2,\dots,m $$
+其中，等式约束是以不等式约束的形式表示的：  
+$$ Ax = b \rightarrow  b \le Ax \le b $$
+
+算法的设计：  
+1. 设置初始罚系数 $\delta_0 > 0$ , 求解精度 $tol$ , 初始解$ x_0$ 罚系数增长率 $\alpha > 1$
+2. 迭代：  
+2.1 够构造二次罚函数： $  \min \frac{1}{2}x^TQx + c^Tx + \delta_k \sum_{i=1}^m \max(0, l_i - Ax_k)_i^2 + \delta_k \sum_{i=1}^m \max(0, Ax_k - u_i)_i^2 $  
+2.2 用B优化二次罚函数，得到解$x_k$
+3. 满足停止条件 - 罚函数的梯度2范数 < $tol$，或者迭代次数超过最大限制，则结束循环
+4. 继续增大罚系数 $\delta_{k+1} = \alpha \delta_k$
+5. 迭代步骤 2
+
+代码如下：
+```cpp
+// inequality constrained quadratic program
+// quadratic cost function
+// linear constraint
+// DataType :  float or double
+// Var_Size :  number of variables
+// Con_Size :  number of constraints
+// description:
+//             f(x) = 0.5 * x' * P * x + q' * x
+//             s.t.
+//             l <= Ax <= b
+template <typename DataType, GONS_UINT Var_Size, GONS_UINT Con_Size>
+class function_iecqp {
+private:
+  GONS_FLOAT rho_ = 10.0;
+  Matrix<DataType, Var_Size, Var_Size> P_;
+  Vector<DataType, Var_Size> q_;
+  Matrix<DataType, Con_Size, Var_Size> A_;
+  Vector<DataType, Con_Size> l_;
+  Vector<DataType, Con_Size> u_;
+
+public:
+  function_iecqp(Matrix<DataType, Var_Size, Var_Size> &P,
+                 Vector<DataType, Var_Size> &q,
+                 Matrix<DataType, Con_Size, Var_Size> &A,
+                 Vector<DataType, Con_Size> &l, Vector<DataType, Con_Size> &u)
+      : P_(P), q_(q), A_(A), l_(l), u_(u) {}
+  DataType operator()(Vector<DataType, Var_Size> &x) const {
+    return 0.5 * CostFunction(x) + 0.5 * rho_ * penaltyFunction(x);
+  }
+  Vector<DataType, Var_Size> gradient(Vector<DataType, Var_Size> &x) {
+    return CostFunction_grad(x) + rho_ * grad_penaltyFunction(x);
+  }
+  DataType CostFunction(Vector<DataType, Var_Size> &x) const {
+    return x.dot(P_ * x.transpose()) + q_.dot(x);
+  }
+  Vector<DataType, Var_Size>
+  CostFunction_grad(Vector<DataType, Var_Size> &x) const {
+    return x * P_ + q_;
+  }
+  DataType penaltyFunction(Vector<DataType, Var_Size> &x) const {
+    DataType sum = DataType(0);
+    Vector<DataType, Con_Size> Ax = A_ * x.transpose();
+    for (size_t i = 0; i < Con_Size; i++) {
+      sum += std::exp2(std::max(Ax(i) - u_(i), DataType(0))) +
+             std::exp2(std::max(l_(i) - Ax(i), DataType(0)));
+    }
+    return sum;
+  }
+  Vector<DataType, Var_Size>
+  grad_penaltyFunction(Vector<DataType, Var_Size> &x) {
+    Vector<DataType, Con_Size> Ax = A_ * x.transpose();
+    Vector<DataType, Con_Size> Conflict_l = l_ - Ax;
+    Vector<DataType, Con_Size> Conflict_u = Ax - u_;
+    Vector<DataType, Var_Size> grad_l;
+    Vector<DataType, Var_Size> grad_u;
+    for (size_t i = 0; i < Con_Size; i++) {
+      if (Conflict_l(i) > 0) {
+        grad_l += -1.0 * Conflict_l(i) * A_.get_Row(i); // dont forget -1.0
+      }
+      if (Conflict_u(i) > 0) {
+        grad_u += A_.get_Row(i) * Conflict_u(i);
+      }
+    }
+    return grad_l + grad_u;
+  }
+
+  void update_rho(GONS_FLOAT rho) { rho_ = rho; }
+};
+
+template <typename DataType, GONS_UINT Var_Size, GONS_UINT Con_Size>
+class QuadPenaltyFunction_IECQP {
+  using X = Vector<DataType, Var_Size>;
+  using F = function_iecqp<DataType, Var_Size, Con_Size>;
+
+public:
+  struct quad_penalty_parmeters {
+    DataType rho = 1;
+    DataType alpha = 2.0; // penalty growth rate
+    GONS_UINT max_iter = 1000;
+    GONS_BOOL verbose = false;
+    GONS_BOOL war_start = true;
+    DataType tol = 1e-3;
+  };
+  enum class PenaltyOptStatus {
+    Failure,
+    InternalUnConSoverMaxStep,
+    InternalUnCOnSolverFail,
+    MaxIterationReached,
+    Success
+  };
+  QuadPenaltyFunction_IECQP(Matrix<DataType, Var_Size, Var_Size> &P,
+                            Vector<DataType, Var_Size> &q,
+                            Matrix<DataType, Con_Size, Var_Size> &A,
+                            Vector<DataType, Con_Size> &l,
+                            Vector<DataType, Con_Size> &u)
+      : P_(P), q_(q), A_(A), l_(l), u_(u), f_(P, q, A, l, u) {}
+  Vector<DataType, Var_Size> get_result() const { return x_; }
+  PenaltyOptStatus Optimize() {
+    GONS_UINT iter = 0;
+    do {
+
+      gradientsearch::BarzilaiBorwein<F, X> BB(f_, x_);
+      auto status = BB.Optimize();
+      if (status ==
+          gradientsearch::BarzilaiBorwein<F,
+                                          X>::BarzilaiBorweinStatus::FAILURE) {
+        LOG_ERROR("Internal gradient method Failure")
+        return PenaltyOptStatus::InternalUnCOnSolverFail;
+      }
+      if (status == gradientsearch::BarzilaiBorwein<
+                        F, X>::BarzilaiBorweinStatus::MAX_ITERATION_REACHED) {
+        LOG_ERROR("Internal gradient method Max Iteration Reached")
+        return PenaltyOptStatus::InternalUnConSoverMaxStep;
+      }
+      Vector<DataType, Var_Size> x_new = BB.get_x();
+
+      // 满足结束条件
+      if (f_.grad_penaltyFunction(x_new).Norm2() < parameters_.tol) {
+        x_ = x_new;
+        LOG("满足结束条件")
+        LOG("迭代次数为：" << iter)
+        LOG("当前解为：" << x_.transpose())
+        break;
+      }
+      ++iter;
+      x_ = x_new;
+      LOG("当前rho为：" << parameters_.rho)
+      LOG("当前解为：" << x_.transpose())
+      parameters_.rho *= parameters_.alpha;
+      f_.update_rho(parameters_.rho);
+    } while (iter < parameters_.max_iter);
+    if (iter >= parameters_.max_iter) {
+      LOG_ERROR("迭代次数超过最大限制")
+      return PenaltyOptStatus::MaxIterationReached;
+    }
+  }
+
+private:
+  Matrix<DataType, Var_Size, Var_Size> P_;
+  Vector<DataType, Var_Size> q_;
+  Matrix<DataType, Con_Size, Var_Size> A_;
+  Vector<DataType, Con_Size> l_;
+  Vector<DataType, Con_Size> u_;
+  // optimal variables
+  Vector<DataType, Var_Size> x_;
+
+  quad_penalty_parmeters parameters_;
+  // Create a function object
+  function_iecqp<DataType, Var_Size, Con_Size> f_;
+};
+```
+测试函数采用OSQP官网给出的例子：
+$$ \begin{aligned}
+&x\frac{1}{2} '\begin{bmatrix} 4& 1 \\ 1& 2\end{bmatrix}x + \begin{bmatrix}1 \\ 1\end{bmatrix}x \\
+&s.t. \\
+&\begin{bmatrix}1\\0\\0\end{bmatrix} \le \begin{bmatrix}1 & 1\\1 & 0\\0& 1\end{bmatrix}x \le \begin{bmatrix}1 \\ 0.7 \\ 0.7 \end{bmatrix}
+\end{aligned}$$
+
+测试代码：
+```cpp
+  Matrix<double, 2, 2> P2 = {{4.0, 1.0}, {1.0, 2.0}};
+  Vector<double, 2> q2 = {1.0, 1.0};
+  Matrix<double, 3, 2> A2 = {{1.0, 1.0}, {1.0, 0.0}, {0.0, 1.0}};
+  Vector<double, 3> l2 = {1.0, 0.0, 0.0};
+  Vector<double, 3> u2 = {1.0, 0.7, 0.7};
+  // construct corresponding solver
+  penalty_function::QuadPenaltyFunction_IECQP<double, 2, 3> PenaltyFunc2(P2, q2, A2, l2, u2);
+  // run optimization
+  PenaltyFunc2.Optimize();
+  // Before internal unconstrained solver oscillates best approx solution
+  // is: 0.299622 0.700024
+  // while osqp gives : 0.29877108 0.701228
+  // This is the best i can do....
+  std::cout << "result: " << PenaltyFunc2.get_result() << std::endl; // get and print the result
+  ```
+  输出：
+  > result: 0.299622 0.700024  
+  
+  osqp的测试结果为：
+  > 0.29877108 0.701228
 
 
-
-
+  <strong>结果与OSQP解相差大概在 1e-3 这个数量级上。尝试继续增大罚系数来提高精度，但是结果没有得到改善，反而引起了内部梯度方法失败， 尝试了缩小BB步长增长速度，限制BB步长大小，加入BB步长的飞单调性约束，但是结果没有得到改善。</strong>   
+  请教了知乎的用户 [@凡人一品](https://www.zhihu.com/question/1972328690827388648) 他给出了很多建议，同时也建议对于二次规划问题，最好使用内点法或者ADMM。尽量避开罚函数因罚系数增大而导致的“病态”问题。  
+  
   
