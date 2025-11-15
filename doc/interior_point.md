@@ -52,14 +52,31 @@ $$ L(\bar x, \lambda, \mu) = f(\bar x) - \mu *ln(\bar x) + \lambda^T(g_i(\bar x)
 $$
 \frac{\nabla L}{\nabla \bar x} = \nabla f(\bar x) - Z + \lambda \nabla g_i(\bar x) \\
 \frac{\nabla L}{\nabla \lambda} = g_i(\bar x) \\
-\frac{\nabla L}{\nabla \mu} = \bar x * Z - \mu $$
-计算L的Hessian矩阵：
+\frac{\nabla L}{\nabla \mu} = \bar x * Z - \mu $$  
+计算L的Hessian矩阵：  
 $$ \begin{aligned}
-\nabla^2_{\bar x \bar x} L &= \nabla^2_{\bar x \bar x} (\nabla f(\bar x) - Z + \lambda \nabla g_i(\bar x)) \\
+\nabla^2_{\bar x \bar x} L &= \nabla^2_{\bar x \bar x} (\nabla f(\bar x) - Z + \lambda \nabla g_i(\bar x))  = W_{xx}\\
 \nabla^2_{\bar x \lambda} L  &= \nabla g_i(\bar x) \\
 \nabla^2_{\bar x Z} L &= -I \\
 \nabla^2_{\lambda Z} L  &= 0 
-\end{aligned}$$
+\end{aligned} $$
+可以得到Hessian矩阵为: 
+$$ 
+\begin{aligned}
+\nabla^2_ L &= \begin{bmatrix}\nabla^2_{\bar x \bar x} L & \nabla^2_{\bar x \lambda} L & \nabla^2_{\bar x Z} L \\
+\nabla^2_{\lambda \bar x} L & \nabla^2_{\lambda \lambda} L & \nabla^2_{\lambda Z} L \\
+\nabla^2_{Z \bar x} L & \nabla^2_{Z \lambda} L & \nabla^2_{Z Z} L \\
+\end{bmatrix} \\
+&= \begin{bmatrix}
+   W_{xx} & \nabla g_i(\bar x) & -I \\
+   \nabla g_i(\bar x)^T & 0 & 0 \\
+   -I & 0 & 0
+\end{bmatrix}
+\end{aligned}
+$$  
+根据经典牛顿法的更新格式：  
+$$x^{k+1} = x^k - \bigtriangledown^2 f(x^k)^{-1} \bigtriangledown f(x^k)$$  
+可以得到
 
 
 
