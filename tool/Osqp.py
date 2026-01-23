@@ -13,7 +13,7 @@ u = np.array([1, 0.7, 0.7])
 prob = osqp.OSQP()
 
 # Setup workspace and change alpha parameter
-prob.setup(P, q, A, l, u, alpha=1.0, verbose=False)
+prob.setup(P, q, A, l, u, alpha=1.0, verbose=False, polish=True)
 
 # Solve problem
 res = prob.solve()

@@ -38,6 +38,7 @@ int main() {
   // is: 0.299622 0.700024
   // while osqp gives : 0.29877108 0.701228
   // This is the best i can do....
+  // I am better
   std::cout << "result: " << PenaltyFunc2.get_result() << std::endl; // get and print the result
   return 0;
 }
